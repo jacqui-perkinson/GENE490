@@ -1,0 +1,177 @@
+---
+title: "TCGA_goseq_AKT1_3rds"
+author: "Jacqui Perkinson"
+date: "10/04/2019"
+output: html_document
+---
+
+Load packages.
+
+```{r}
+library(goseq)
+library(dplyr)
+library(ggplot2)
+```
+
+# Load TCGA AKT1 (3rds) limma output objects.
+
+Load the objects for goseq.
+
+```{r}
+load("~/Desktop/Gastric_Cancer_Datasets/Saved/TCGA_AKT1_3rds_limma_output.Rdata")
+```
+
+# GoSeq using the limma output of differentially expressed genes between high AKT1 and low AKT1 expression groups (split by 3rds).
+
+Format the the topTable tcga_AKT1_tt_en_extr) object from limma into a vector that is suitable for goseq.
+
+```{r}
+tcga_AKT1_genes <- as.integer(p.adjust(tcga_AKT1_tt_en_extr$P.Value[tcga_AKT1_tt_en_extr$logFC!=0], method = "BH")<.05)
+names(tcga_AKT1_genes) <- row.names(tcga_AKT1_tt_en_extr[tcga_AKT1_tt_en_extr$logFC!=0,])
+table(tcga_AKT1_genes)
+```
+
+Fit the probability weighting function (PWF).
+
+```{r}
+#pdf("goseqbiasakt1tcga.pdf", height=4)
+tcga_AKT1_pwf <- nullp(tcga_AKT1_genes, "hg19", "ensGene")
+tcga_AKT1_pwf %>% head
+#dev.off()
+```
+
+Use the Wallenius approximation (default method) to calculate the over/under expressed GO groups in the differentially expressed genes.
+
+```{r}
+tcga_AKT1_wall <- goseq(tcga_AKT1_pwf, "hg19", "ensGene")
+tcga_AKT1_wall %>% head
+```
+
+# Interpret the results from the GO analysis (using the Wallenius approximation).
+
+To add the genes that are in the GO categories, make a loop to pull the genes out of numDEInCat. What is in numDEInCat.
+
+```{r}
+genelists <- function(tcga_AKT1_pwf, goterms, genome, ids){
+  gene2cat <- getgo(rownames(tcga_AKT1_pwf), genome, ids)
+  cat2gene <- split(rep(names(gene2cat), sapply(gene2cat, length)),
+                    unlist(gene2cat, use.names = FALSE))
+  out <- list()
+  for(term in goterms){
+    tmp <- tcga_AKT1_pwf[cat2gene[[term]],]
+    tmp <- rownames(tmp[tmp$DEgenes > 0, ])
+    out[[term]] <- tmp
+  }
+  out
+}
+
+goterms <- tcga_AKT1_wall$category
+tcga_AKT1_go_list <- genelists(tcga_AKT1_pwf, goterms, "hg19", "ensGene")
+```
+
+Add columns to tcga_AKT1_wall; over-represented adjusted P values and under-represented adjusted P values. 
+
+```{r}
+tcga_AKT1_wall$over_represented_adj_pvalue <- p.adjust(tcga_AKT1_wall$over_represented_pvalue, method = "BH")
+tcga_AKT1_wall$under_represented_adj_pvalue <- p.adjust(tcga_AKT1_wall$under_represented_pvalue, method = "BH")
+```
+
+### GO over-represented genes.
+
+Pull GO categories that are signifcantly over represented below a 0.05 FDR cutoff. Then, add the over represented GO categories to tcga_AKT1_wall.
+
+```{r}
+tcga_AKT1_goCats_over <- tcga_AKT1_wall$category[p.adjust(tcga_AKT1_wall$over_represented_pvalue, method = "BH")<0.05]
+tcga_AKT1_goCats_over %>% length
+tcga_AKT1_over <- merge(tcga_AKT1_goCats_over, tcga_AKT1_wall, by =1)
+tcga_AKT1_over %>% head
+```
+
+List the GO categories.
+
+```{r}
+tcga_AKT1_overNames <- tcga_AKT1_over %>% dplyr::select(., x) %>% unlist()
+```
+Loop that will run through the GO categories and pull the significant genes that are relevant for that category.
+
+```{r}
+sigGOgenes <- c()
+for(gt in tcga_AKT1_overNames){
+  GOiden <- tcga_AKT1_go_list[gt] %>% unlist()
+  GOiden_en <- AnnotationDbi::select(org.Hs.eg.db, keys=GOiden, columns="SYMBOL", keytype = "ENSEMBL") %>% 
+    na.omit()
+  sigGOgenes <- c(sigGOgenes,
+                  paste(GOiden_en[,2], sep="", collapse="::"))
+}
+
+
+tcga_AKT1_over$genes <- sigGOgenes
+```
+
+Edit the table (e.g. the order of the columns).
+
+```{r}
+tcga_AKT1_over <- tcga_AKT1_over[,c(1,6,7,4,5,2,8,3,9,10)]
+colnames(tcga_AKT1_over) <- c("GO Category", "GO Term", "Ontology", 
+                             "Number of Differentially Expressed Genes in Category", "Total Number of Genes in Category",
+                             "P.Value for Over-represented Differentially Expressed Genes", "Adjusted P.Value for Over-represented Differentially Expressed Genes",
+                             "P.Value for Under-represented Differentially Expressed Genes", "Adjusted P.Value for Under-represented Differentially Expressed Genes",
+                             "List of Differentially Expressed Genes in Category")
+
+tcga_AKT1_over %>% head
+```
+
+### GO under-represented genes.
+
+Pull GO categories that are signifcantly under represented below a 0.05 FDR cutoff. Then, add the under represented GO categories to tcga_AKT1_wall.
+
+```{r}
+tcga_AKT1_goCats_under <- tcga_AKT1_wall$category[p.adjust(tcga_AKT1_wall$under_represented_pvalue, method = "BH")<0.05]
+tcga_AKT1_goCats_under %>% length
+tcga_AKT1_under <- merge(tcga_AKT1_goCats_under, tcga_AKT1_wall, by =1)
+tcga_AKT1_under %>% head
+```
+
+List the GO categories.
+
+```{r}
+tcga_AKT1_underNames <- tcga_AKT1_under %>% dplyr::select(., x) %>% unlist()
+```
+
+Loop that will run through the GO categories and pull the significant genes that are relevant for that category.
+
+```{r}
+sigGOgenes <- c()
+for(gt in tcga_AKT1_underNames){
+  GOiden <- tcga_AKT1_go_list[gt] %>% unlist()
+  GOiden_en <- AnnotationDbi::select(org.Hs.eg.db, keys=GOiden, columns="SYMBOL", keytype = "ENSEMBL") %>% 
+    na.omit()
+  sigGOgenes <- c(sigGOgenes,
+                  paste(GOiden_en[,2], sep="", collapse="::"))
+}
+
+
+tcga_AKT1_under$genes <- sigGOgenes
+```
+
+Edit the table (e.g. the order of the columns).
+
+```{r}
+tcga_AKT1_under <- tcga_AKT1_under[,c(1,6,7,4,5,3,9,2,8,10)]
+colnames(tcga_AKT1_under) <- c("GO Category", "GO Term", "Ontology", 
+                              "Number of Differentially Expressed Genes in Category", "Total Number of Genes in Category",
+                              "P.Value for Under-represented Differentially Expressed Genes", "Adjusted P.Value for Under-represented Differentially Expressed Genes",
+                              "P.Value for Over-represented Differentially Expressed Genes", "Adjusted P.Value for Over-represented Differentially Expressed Genes",
+                              "List of Differentially Expressed Genes in Category")
+
+tcga_AKT1_under %>% head
+
+#write.csv(tcga_AKT1_over, file = "GO_TCGA_AKT1_all_over.csv")
+#write.csv(tcga_AKT1_under, file = "GO_TCGA_AKT1_all_under.csv")
+```
+
+
+
+Key outputs:
+write.csv(tcga_AKT1_over, file = "GO_TCGA_AKT1_over.csv")
+write.csv(tcga_AKT1_under, file = "GO_TCGA_AKT1_under.csv")

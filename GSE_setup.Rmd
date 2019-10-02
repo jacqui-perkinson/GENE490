@@ -1,0 +1,220 @@
+---
+title: "GSE_setup"
+author: "Jacqui Perkinson"
+date: "26/03/2019"
+output: html_document
+---
+
+Load required packages.
+
+```{r}
+library(here)
+library(dplyr)
+library(ggplot2)
+
+options(width=80)
+```
+
+# GSE62254 Gastric Cancer data set.
+
+Load GSE62254 data set.
+
+```{r}
+load(here('Data/gse62254_gastric_cancer.RData'))
+```
+
+Update gse62254_expDat with new expression data.
+
+```{r}
+gse62254_expDat <- readRDS('~/Desktop/Gastric_Cancer_Datasets/Data/gse62254_expDat-20190619.rds')
+```
+
+What sort of objects are these?
+
+```{r}
+gse62254_clinDat %>% class # clinical data.
+gse62254_expDat %>% class # expression data, row names - gene symbols and columns - tumours.
+```
+
+Dimensions.
+
+```{r}
+gse62254_clinDat %>% dim
+gse62254_expDat %>% dim
+```
+
+Variable names for clinical data set.
+
+```{r}
+gse62254_clinDat %>% names
+gse62254_clinDat %>% head
+```
+
+The sample names should be included with the clinical data (but they are not). The samples are in the same order as in the expresion data, so they can be add as a new variable.
+
+```{r}
+gse62254_clinDat <- gse62254_clinDat %>% mutate(., PatID = colnames(gse62254_expDat))
+```
+
+Now we have patients IDs in a column called PatID. 
+
+```{r}
+gse62254_clinDat %>% head
+```
+
+Table of Lauren Class data.
+
+```{r}
+gse62254_clinDat$lc %>% table
+```
+
+Table of Lauren Class versus Molecular Subtype.
+
+```{r}
+table(gse62254_clinDat$lc, gse62254_clinDat$molSub)
+table(gse62254_clinDat$PatID, gse62254_clinDat$lc) %>% head
+```
+
+Note: Can "attach" clinical data to make the variables more accessible. Now the variables can be referenced directly.
+
+```{r}
+attach(gse62254_clinDat)
+table(lc)
+```
+
+# Plots.
+
+Look at the expression of three genes (CDH1, AKT1, and AKT3) and their relationship with different subtypes.
+
+### Gene - CHD1.
+
+Extract expression information for CDH1.
+
+```{r}
+CDH1_data <- gse62254_expDat[rownames(gse62254_expDat) == "CDH1"]
+```
+
+Histogram of the CDH1 expression data.
+
+```{r}
+#pdf("cdhhist.pdf", height = 4)
+CDH1_data %>% as.data.frame() %>%  
+  ggplot(aes(x=.)) + 
+  geom_histogram() + 
+  ggtitle("E-cadherin (CDH1) expression") +
+  xlab("Log2 expression of CDH1 in GEO") +
+  ylab("Frequency") + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"))
+#dev.off()
+```
+
+Boxplot of CDH1 expression versus Molecular Subtype.
+
+```{r}
+cbind(CDH1_data, as.factor(molSub)) %>% as.data.frame() %>%  
+  ggplot(aes(x=molSub, y=CDH1_data, group=molSub, colour=molSub)) + 
+  geom_boxplot() + 
+  ggtitle("E-cadherin (CDH1) expression versus molecular subtype") +
+  xlab("Molecular Subtype") +
+  ylab("Log2 expression")
+```
+
+Plot the spread of CDH1 in the GSE62254 data set.
+
+```{r}
+#pdf("cdhden.pdf", height = 4)
+plot(density(gse62254_expDat[,1]))
+points(CDH1_data, rep(0, length(CDH1_data)), col='red', pch=16, cex=0.5)
+#dev.off
+```
+
+### Gene - AKT1.
+
+Extract expression information for AKT1.
+
+```{r}
+AKT1_data <- gse62254_expDat[rownames(gse62254_expDat) == "AKT1"]
+```
+
+Histogram of the AKT1 data.
+
+```{r}
+#pdf("akt1hist.pdf", height = 4)
+AKT1_data %>% as.data.frame() %>%  
+  ggplot(aes(x=.)) + 
+  geom_histogram() + 
+  ggtitle("Protein Kinase B isoform 1 (AKT1) expression") +
+  xlab("Log2 expression of AKT1 in GEO") +
+  ylab("Frequency") + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"))
+#dev.off()
+```
+
+Boxplot of AKT1 expression versus Molecular Subtype.
+
+```{r}
+cbind(AKT1_data, as.factor(molSub)) %>% as.data.frame() %>%  
+  ggplot(aes(x=molSub, y=AKT1_data, group=molSub, colour=molSub)) + 
+  geom_boxplot() + 
+  ggtitle("Protein Kinase B isoform 1 (AKT1) expression versus molecular subtype") +
+  xlab("Molecular Subtype") +
+  ylab("Log2 expression")
+```
+
+Plot the spread of AKT1 in the GSE62254 data set.
+
+```{r}
+#pdf("akt1den.pdf", height = 4)
+plot(density(gse62254_expDat[,1]))
+points(AKT1_data, rep(0, length(AKT1_data)), col='red', pch=16, cex=0.5)
+#dev.off()
+```
+
+### Gene - AKT3.
+
+Extract expression information for AKT3.
+
+```{r}
+AKT3_data <- gse62254_expDat[rownames(gse62254_expDat) == "AKT3"]
+```
+
+Histogram of the AKT3 data.
+
+```{r}
+#pdf("akt3hist.pdf", height = 4)
+AKT3_data %>% as.data.frame() %>%  
+  ggplot(aes(x=.)) + 
+  geom_histogram() + 
+  ggtitle("Protein Kinase B isoform 3 (AKT3) expression") +
+  xlab("Log2 expression of AKT3 in GEO") +
+  ylab("Frequency") + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"))
+#dev.off()
+```
+
+Boxplot of AKT3 expression versus Molecular Subtype.
+
+```{r}
+cbind(AKT3_data, as.factor(molSub)) %>% as.data.frame() %>%  
+  ggplot(aes(x=molSub, y=AKT3_data, group=molSub, colour=molSub)) + 
+  geom_boxplot() + 
+  ggtitle("Protein Kinase B isoform 3 (AKT3) expression versus molecular subtype") +
+  xlab("Molecular Subtype") +
+  ylab("Log2 expression")
+```
+
+Plot the spread of AKT3 in the GSE62254 data set.
+
+```{r}
+#pdf("akt3den.pdf", height = 4)
+plot(density(gse62254_expDat[,1]))
+points(AKT3_data, rep(0, length(AKT3_data)), col='red', pch=16, cex=0.5)
+#dev.off()
+```
+
+
+
+
+Key outputs: 
+gse62254_clinDat - GSE clinical data.
+gse62254_expDat - GSE expression data.
+CDH1_data - GSE CDH1 expression data.
+AKT1_data - GSE AKT1 expression data.
+AKT3_data - GSE AKT3 expression data.

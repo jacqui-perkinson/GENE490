@@ -1,0 +1,214 @@
+---
+title: "heatmap_AKT_ordered"
+author: "Jacqui Perkinson"
+date: "7/27/2019"
+output: html_document
+---
+
+Load required packages
+
+```{r}
+library(dplyr)
+library(gplots)
+```
+
+Source code for modified heatmap.2 function (called heatmap.mik)
+
+```{r}
+source('~/Desktop/Gastric_Cancer_Datasets/heatmap-mik.R')
+```
+
+```{r}
+load("~/Desktop/Gastric_Cancer_Datasets/Saved/expDat_clinDat_output.Rdata")
+load("~/Desktop/Gastric_Cancer_Datasets/Saved/venn_AKT_genelists_output.Rdata")
+```
+
+Generate a random sample of 20 from the total number of rows in expDat
+
+```{r}
+set.seed(1111)
+randSamp <- sample(1:nrow(gse62254_expDat), 20)
+```
+
+Extract genes using the random sample
+
+```{r}
+rand_geneList <- rownames(gse62254_expDat)[randSamp]
+```
+
+Print gene list
+
+```{r}
+rand_geneList
+```
+
+Extract expression data for the genes in the list
+
+```{r}
+rand_geneDat <- gse62254_expDat[match(rand_geneList, rownames(gse62254_expDat)),]
+```
+
+Standardise to mean 0, sd 1, and set observation above/below 3/-3 to 3 or -3
+
+```{r}
+rand_hm <- t(apply(rand_geneDat, 1, scale, scale=T))
+rand_hm[rand_hm > 3] <- 3
+rand_hm[rand_hm < -3] <- -3
+```
+
+Extract data for CDH1, AKT1, AKT3
+
+```{r}
+cdh1Dat <- gse62254_expDat["CDH1",]
+akt1Dat <- gse62254_expDat["AKT1",]
+akt3Dat <- gse62254_expDat["AKT3",]
+akt2Dat <- gse62254_expDat["AKT2",]
+```
+
+Create colour matrix for teh above three genes
+
+```{r}
+columnColours <- rbind(bluered(ncol(gse62254_expDat))[rank(cdh1Dat)],
+                       bluered(ncol(gse62254_expDat))[rank(akt1Dat)],
+                       bluered(ncol(gse62254_expDat))[rank(akt3Dat)])
+rownames(columnColours) <- c("CDH1", "AKT1", "AKT3")
+```
+
+Heatmap with column order from clustering
+
+```{r}
+heatmap.mik(rand_hm, trace='none', scale='none', col=bluered(50), ColSideColors = columnColours)
+```
+
+Heatmap with column order from CDH1
+
+```{r}
+cdh1_ord <- order(cdh1Dat)
+heatmap.mik(rand_hm[,cdh1_ord], trace='none', scale='none', col=bluered(50), ColSideColors = columnColours[,cdh1_ord], Colv=FALSE)
+```
+
+
+
+
+```{r}
+AKT_geneList <- c("AKT1", "AKT2", "AKT3")
+```
+
+Print gene list
+
+```{r}
+AKT_geneList
+```
+
+Extract expression data for the genes in the list
+
+```{r}
+AKT_geneDat <- gse62254_expDat[match(AKT_geneList, rownames(gse62254_expDat)),]
+```
+
+Standardise to mean 0, sd 1, and set observation above/below 3/-3 to 3 or -3
+
+```{r}
+AKT_hm <- t(apply(AKT_geneDat, 1, scale, scale=T))
+AKT_hm[AKT_hm > 3] <- 3
+AKT_hm[AKT_hm < -3] <- -3
+```
+
+Create colour matrix for the above three genes
+
+```{r}
+cdh_columnColours <- rbind(bluered(ncol(gse62254_expDat))[rank(cdh1Dat)])
+rownames(cdh_columnColours) <- "CDH1"
+```
+
+Heatmap with column order from clustering
+
+```{r}
+heatmap.mik(AKT_hm, trace='none', scale='none', col=bluered(50), ColSideColors = cdh_columnColours,
+            keysize=0.5, cexRow=0.5)
+```
+
+Heatmap with column order from CDH1
+
+```{r}
+#pdf("51hm_ordered_cdh.pdf", height=4)
+heatmap.mik(AKT_hm[,cdh1_ord], trace='none', scale='none', col=bluered(50), ColSideColors = cdh_columnColours[,cdh1_ord], Colv=FALSE)
+#dev.off()
+```
+
+
+
+
+
+
+
+
+
+
+Print gene list
+
+```{r}
+AKT3_geneList <- AKT3_final
+```
+
+Extract expression data for the genes in the list
+
+```{r}
+AKT3_geneDat <- gse62254_expDat[match(AKT3_geneList, rownames(gse62254_expDat)),]
+```
+
+Standardise to mean 0, sd 1, and set observation above/below 3/-3 to 3 or -3
+
+```{r}
+AKT3_hm <- t(apply(AKT3_geneDat, 1, scale, scale=T))
+AKT3_hm[AKT3_hm > 3] <- 3
+AKT3_hm[AKT3_hm < -3] <- -3
+```
+
+Create colour matrix for the above three genes
+
+```{r}
+akt_columnColours <- rbind(bluered(ncol(gse62254_expDat))[rank(cdh1Dat)],
+                       bluered(ncol(gse62254_expDat))[rank(akt1Dat)],
+                       bluered(ncol(gse62254_expDat))[rank(akt3Dat)])
+rownames(akt_columnColours) <- c("CDH1", "AKT1", "AKT3")
+```
+
+Heatmap with column order from clustering
+
+```{r}
+heatmap.mik(AKT3_hm, trace='none', scale='none', col=bluered(50), ColSideColors = akt_columnColours)
+```
+
+Heatmap with column order from CDH1 and AKT3
+
+```{r}
+heatmap.mik(AKT3_hm[,cdh1_ord], trace='none', scale='none', col=bluered(50), ColSideColors = akt_columnColours[,cdh1_ord], Colv=FALSE)
+```
+
+```{r}
+#pdf("51hm_ordered_cdhwithakt3.pdf", height=4)
+akt3_ord <- order(akt3Dat)
+heatmap.mik(AKT3_hm[,akt3_ord], trace='none', scale='none', col=bluered(50), ColSideColors = akt_columnColours[,akt3_ord], Colv=FALSE)
+#dev.off()
+```
+
+```{r}
+a <- c("AKT1", "AKT2", "AKT3", "EGFR", "EGFR", "EGFR", "EGFR")
+b <- gse62254_expDat[match(a, rownames(gse62254_expDat)),]
+c <- t(apply(b, 1, scale, scale=T))
+c[c > 3] <- 3
+c[c < -3] <- -3
+
+columnColours_cdh <- rbind(bluered(ncol(gse62254_expDat))[rank(cdh1Dat)])
+rownames(columnColours_cdh) <- "CDH1"
+
+#pdf("3hm.pdf", height=4)
+heatmap.mik(c[,cdh1_ord], trace='none', scale='none', col=bluered(50), ColSideColors = columnColours_cdh[,cdh1_ord], Colv=FALSE)
+#dev.off()
+```
+
+
+
+
+

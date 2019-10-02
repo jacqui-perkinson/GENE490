@@ -1,0 +1,190 @@
+---
+title: "GSE_limma_AKT3_3rds"
+author: "Jacqui Perkinson"
+date: "26/03/2019"
+output: html_document
+---
+
+Load required packages.
+
+```{r}
+library(here)
+library(dplyr)
+library(ggplot2)
+library(limma)
+library(org.Hs.eg.db)
+
+options(width=80)
+```
+
+# Load GSE setup objects
+
+```{r}
+load("~/Desktop/Gastric_Cancer_Datasets/Saved/GSE_setup.Rdata")
+```
+
+# Limma Analysis.
+
+### Set up the high AKT3 and low AKT3 expression groups (low = 1/3 and high = 2/3) for limma analysis.
+
+```{r}
+AKT3_data_sorted <- sort(AKT3_data)
+threshold <- AKT3_data_sorted[100] # 7.718125
+```
+
+Split AKT3 expression data by 3rds, assign the groups "high = 1" or "low = 0".
+
+```{r}
+gse_AKT3_data_extr <- ifelse(AKT3_data <= threshold, "0", "1")
+gse_AKT3_data_extr %>% table
+gse_AKT3_data_extr %>% head
+```
+
+### Find the differentially expressed genes between the AKT3 high and AKT3 low groups.
+
+Create the design matrix and rename columns.
+
+```{r}
+AKT3_design_extr <- model.matrix(~gse_AKT3_data_extr)
+colnames(AKT3_design_extr) <- c("low", "highVSlow")
+AKT3_design_extr %>% head
+```
+
+Fit a linear model.
+
+```{r}
+AKT3_fit_extr <- lmFit(gse62254_expDat, AKT3_design_extr)
+AKT3_fit_extr <- eBayes(AKT3_fit_extr)
+gse_AKT3_tt_extr <- topTable(AKT3_fit_extr, coef = "highVSlow", adjust = "BH", n = nrow(gse62254_expDat))
+```
+
+Preview topTable output.
+
+```{r}
+gse_AKT3_tt_extr %>% dim
+gse_AKT3_tt_extr %>% head
+```
+
+Pull the significant differentially expressed genes between high AKT3 and low AKT3 expression groups.
+
+```{r}
+sum(gse_AKT3_tt_extr$adj.P.Val<0.05)
+```
+
+Pull a list of the genes with an adjusted P value < 0.05.
+
+```{r}
+gse_AKT3_sigGen_extr <- gse_AKT3_tt_extr %>%  
+  mutate(., Gene=rownames(gse_AKT3_tt_extr)) %>% 
+  filter(., adj.P.Val < 0.05) %>% 
+  dplyr::select(., Gene)
+
+gse_AKT3_sigGen_extr %>% dim
+gse_AKT3_sigGen_extr %>% head
+```
+
+Significant genes with a FC above 2 (negative or positive).
+
+```{r}
+gse_AKT3_fc2 <- gse_AKT3_tt_extr %>%  
+  mutate(., Gene=rownames(gse_AKT3_tt_extr)) %>% 
+  filter(., adj.P.Val < 0.05 & 2^abs(gse_AKT3_tt_extr$logFC) >= 2) %>% 
+  dplyr::select(., Gene)
+
+gse_AKT3_fc2 %>% dim
+gse_AKT3_fc2 %>% head
+```
+
+Volcano plot.
+
+```{r}
+#volcanoplot(AKT3_fit_extr, coef = "highVSlow", xlim = c(-2,2)) +
+#  abline(a = 1.301, b = 0, h = 1.301, v = c(-1, 1), col = "red") 
+
+#pdf("gse_akt3_volcano.pdf", height=4)
+a <- ggplot(gse_AKT3_tt_extr, aes(x= logFC, y = -log10(adj.P.Val))) + geom_point(alpha=1, size=0.5) + xlab("log2 fold change") + ylab("-log10 (adjusted p-value)") + xlim(-2, 2)
+b <- a + geom_vline(xintercept= c(-1, 1), color = "red")
+b + geom_hline(yintercept= 1.301, color = "red") + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"))
+#dev.off()
+```
+
+# Convert gene symbols to Ensembl.
+
+Create and data frame where genes symbols matched to their ensembl code (using toptable object - gse_AKT3_tt_extr).
+
+```{r}
+AKT3_sym2ens_extr <- AnnotationDbi::select(org.Hs.eg.db, keys = rownames(gse_AKT3_tt_extr), columns = "ENSEMBL", keytype = "SYMBOL", multiVals ='first')
+AKT3_sym2ens_extr %>% head
+```
+
+Check the length, they need to be the same to assign row names as ensembl codes.
+
+```{r}
+AKT3_sym2ens_extr %>% nrow
+gse_AKT3_tt_extr %>% nrow
+```
+
+Matching between genes and ensembl occur 1:many, can correct this by matching genes to the first listed ensembl.
+
+```{r}
+AKT3_sym2ens_extr <- AKT3_sym2ens_extr[ match(rownames(gse_AKT3_tt_extr), AKT3_sym2ens_extr[,1]) ,2]
+```
+
+Again, check the length as it should be the same now.
+
+```{r}
+AKT3_sym2ens_extr %>% length
+gse_AKT3_tt_extr %>% nrow
+```
+
+Add ensembl code (AKT3_sym2ens) to the topTable from limma (gse_AKT3_tt) as rownames.
+
+```{r}
+gse_AKT3_tt_en_extr <- cbind(gse_AKT3_tt_extr, AKT3_sym2ens_extr)
+gse_AKT3_tt_en_extr <- gse_AKT3_tt_en_extr %>% na.omit()
+unique_en_extr <- gse_AKT3_tt_en_extr$AKT3_sym2ens_extr %>% as.character %>% make.unique()
+gse_AKT3_tt_en_extr <- cbind(gse_AKT3_tt_en_extr, unique_en_extr)
+rownames(gse_AKT3_tt_en_extr) <- gse_AKT3_tt_en_extr$unique_en_extr
+gse_AKT3_tt_en_extr %>% head()
+gse_AKT3_tt_en_extr <- gse_AKT3_tt_en_extr[,1:6]
+```
+
+Pull the significant differentially expressed genes with Ensembl IDs.
+
+```{r}
+sum(gse_AKT3_tt_en_extr$adj.P.Val<0.05)
+```
+
+Pull a list of the genes with an adjusted P value < 0.05 with Ensembl IDs.
+
+```{r}
+gse_AKT3_sigGen_en_extr <- gse_AKT3_tt_en_extr %>%  
+  mutate(., Gene=rownames(gse_AKT3_tt_en_extr)) %>% 
+  filter(., adj.P.Val < 0.05) %>% 
+  dplyr::select(., Gene)
+
+gse_AKT3_sigGen_en_extr %>% dim
+gse_AKT3_sigGen_en_extr %>% head
+```
+
+Significant genes with a FC above two (negative or positive) with Ensembl IDs.
+
+```{r}
+gse_AKT3_fc2_en <- gse_AKT3_tt_en_extr %>%  
+  mutate(., Gene=rownames(gse_AKT3_tt_en_extr)) %>% 
+  filter(., adj.P.Val < 0.05 & 2^abs(gse_AKT3_tt_en_extr$logFC) >= 2) %>% 
+  dplyr::select(., Gene)
+
+gse_AKT3_fc2_en %>% dim
+gse_AKT3_fc2_en %>% head
+```
+
+
+
+Key output:
+gse_AKT3_tt_extr - toptable output of differentially expressed genes between AKT3 high and AKT3 low groups (GENE SYMBOLS)
+gse_AKT3_tt_en_extr - toptable output of differentially expressed genes between AKT3 high and AKT3 low groups (ENSEMBL)
+gse_AKT3_sigGen_extr - list of significantly differentially expressed genes between AKT3 high and AKT3 low groups (GENE SYMBOLS)
+gse_AKT3_sigGen_en_extr - list of significantly differentially expressed genes between AKT3 high and AKT3 low groups (ENSEMBL)
+gse_AKT3_fc2 - list of significantly differentially expressed genes between AKT3 high and AKT3 low groups with a FC more than 2 (GENE SYMBOLS)
+gse_AKT3_fc2_en - list of significantly differentially expressed genes between AKT3 high and AKT3 low groups with a FC more than 2 (ENSEMBL)

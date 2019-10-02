@@ -1,0 +1,141 @@
+---
+title: "Saved"
+author: "Jacqui Perkinson"
+date: "7/19/2019"
+output: html_document
+---
+
+# List of saved objects for working in mutiple scripts.
+
+### Examples of how to save and load.
+
+To save everything in your environment.
+save.image(file="allthestuff.RData")
+
+To save selected objects.
+save(list=c("goseqresults","otherstuff"), file="somestuff.RData")
+
+To load selected objects.
+load("somestuff.RData")
+
+Save the significant differentially expressed genes in a text file - one gene per line.
+write.table(list, file="list.txt",row.names=FALSE, col.names=FALSE, quote=FALSE)
+
+Save excel worksheet.
+write.csv(dataframe, file = "dataframe.csv")
+
+Save graphs.
+pdf("name.pdf", height=4)
+-
+dev.off()
+
+Save to this space.
+"~/Desktop/Gastric_Cancer_Datasets/Saved/GSE_setup"
+
+### How to use biocLite
+
+source("https://bioconductor.org/biocLite.R")
+biocLite('package')
+
+### Saved.
+
+GSE setup.
+
+```{r}
+save(list= c("gse62254_clinDat", "gse62254_expDat", "CDH1_data", "AKT1_data", "AKT3_data"), 
+file = "~/Desktop/Gastric_Cancer_Datasets/Saved/GSE_setup.Rdata")
+```
+
+GSE lc limma output.
+
+```{r}
+save(list = c("gse_lc_tt", "gse_lc_tt_en", "gse_lc_sigGen", "gse_lc_sigGen_en"),
+file = "~/Desktop/Gastric_Cancer_Datasets/Saved/GSE_lc_limma_output.Rdata")
+```
+
+GSE AKT3 (median) limma output.
+
+```{r}
+save(list = c("gse_AKT3_tt", "gse_AKT3_tt_en", "gse_AKT3_sigGen", "gse_AKT3_sigGen_en"),
+file = "~/Desktop/Gastric_Cancer_Datasets/Saved/GSE_AKT3_median_limma_output.Rdata")
+```
+
+GSE AKT1 (median) limma output.
+
+```{r}
+save(list = c("gse_AKT1_tt", "gse_AKT1_tt_en", "gse_AKT1_sigGen", "gse_AKT1_sigGen_en"),
+file = "~/Desktop/Gastric_Cancer_Datasets/Saved/GSE_AKT1_median_limma_output.Rdata")
+```
+
+GSE AKT3 (3rds) limma output.
+
+```{r}
+save(list = c("gse_AKT3_tt_extr", "gse_AKT3_tt_en_extr", "gse_AKT3_sigGen_extr", "gse_AKT3_sigGen_en_extr", "gse_AKT3_fc2", "gse_AKT3_fc2_en"),
+file = "~/Desktop/Gastric_Cancer_Datasets/Saved/GSE_AKT3_3rds_limma_output.Rdata")
+```
+
+GSE AKT1 (3rds) limma output.
+
+```{r}
+save(list = c("gse_AKT1_tt_extr", "gse_AKT1_tt_en_extr", "gse_AKT1_sigGen_extr", "gse_AKT1_sigGen_en_extr", "gse_AKT1_fc2", "gse_AKT1_fc2_en"),
+file = "~/Desktop/Gastric_Cancer_Datasets/Saved/GSE_AKT1_3rds_limma_output.Rdata")
+```
+
+TCGA setup.
+
+```{r}
+save(list = c("tcga_clinDat", "tcga_expDat", "tcga_CDH1_data", "tcga_AKT1_data", "tcga_AKT3_data"),
+file = "~/Desktop/Gastric_Cancer_Datasets/Saved/TCGA_setup.Rdata")
+```
+
+TCGA lc limma output.
+
+```{r}
+save(list = c("tcga_lc_tt", "tcga_lc_tt_en", "tcga_lc_sigGen", "tcga_lc_sigGen_en"),
+file = "~/Desktop/Gastric_Cancer_Datasets/Saved/TCGA_lc_limma_output.Rdata")
+```
+
+TCGA AKT3 (median) limma output.
+
+```{r}
+save(list = c("tcga_AKT3_tt", "tcga_AKT3_tt_en", "tcga_AKT3_sigGen", "tcga_AKT3_sigGen_en"),
+file = "~/Desktop/Gastric_Cancer_Datasets/Saved/TCGA_AKT3_median_limma_output.Rdata")
+```
+
+TCGA AKT1 (median) limma output.
+
+```{r}
+save(list = c("tcga_AKT1_tt", "tcga_AKT1_tt_en", "tcga_AKT1_sigGen", "tcga_AKT1_sigGen_en"),
+file = "~/Desktop/Gastric_Cancer_Datasets/Saved/TCGA_AKT1_median_limma_output.Rdata")
+```
+
+TCGA AKT3 (3rds) limma output.
+
+```{r}
+save(list = c("tcga_AKT3_tt_extr", "tcga_AKT3_tt_en_extr", "tcga_AKT3_sigGen_extr", "tcga_AKT3_sigGen_en_extr", "tcga_AKT3_fc2", "tcga_AKT3_fc2_en"),
+file = "~/Desktop/Gastric_Cancer_Datasets/Saved/TCGA_AKT3_3rds_limma_output.Rdata")
+```
+
+TCGA AKT1 (3rds) limma output.
+
+```{r}
+save(list = c("tcga_AKT1_tt_extr", "tcga_AKT1_tt_en_extr", "tcga_AKT1_sigGen_extr", "tcga_AKT1_sigGen_en_extr", "tcga_AKT1_fc2", "tcga_AKT1_fc2_en"),
+file = "~/Desktop/Gastric_Cancer_Datasets/Saved/TCGA_AKT1_3rds_limma_output.Rdata")
+```
+
+venn AKT genelists output.
+
+```{r}
+save(list = c("AKT3_final", "AKT3_only", "AKT3_only_allsig", "AKT3_allsig", "AKT1_only_allsig", "AKT1_final", "tcga_tt_AKT3_keygenes", "tcga_tt_AKT3_keygenes_gsym", "gse_tt_AKT3_keygenes", "gse_tt_AKT3_keygenes_gsym", "totalgns"),
+file = "~/Desktop/Gastric_Cancer_Datasets/Saved/venn_AKT_genelists_output.Rdata")
+```
+
+expDat and ClinDat output.
+
+```{r}
+save(list = c("tcga_clinDat", "tcga_expDat", "gse62254_clinDat", "gse62254_expDat"), file = "~/Desktop/Gastric_Cancer_Datasets/Saved/expDat_clinDat_output.Rdata")
+```
+
+
+
+

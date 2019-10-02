@@ -1,0 +1,142 @@
+---
+title: "GSE_goseq_AKT3_3rds"
+author: "Jacqui Perkinson"
+date: "10/04/2019"
+output: html_document
+---
+
+Load packages.
+
+```{r}
+library(goseq)
+library(dplyr)
+library(ggplot2)
+```
+
+# Load GSE AKT3 (3rds) limma output objects.
+
+Load the objects for goseq.
+
+```{r}
+load("~/Desktop/Gastric_Cancer_Datasets/Saved/GSE_AKT3_3rds_limma_output.Rdata")
+```
+
+# GoSeq using the limma output of differentially expressed genes between high AKT3 and low AKT3 expression groups (split by 3rds).
+
+Note: GSE is microarray data (do not correct for gene length).
+
+Format the the topTable (gse_AKT3_tt_en_extr) object from limma into a vector that is suitable for goseq.
+
+```{r}
+gse_AKT3_genes <- as.integer(p.adjust(gse_AKT3_tt_en_extr$P.Value[gse_AKT3_tt_en_extr$logFC!=0], method = "BH")<.05)
+names(gse_AKT3_genes) <- row.names(gse_AKT3_tt_en_extr[gse_AKT3_tt_en_extr$logFC!=0,])
+table(gse_AKT3_genes)
+```
+
+Fit the probability weighting function (PWF).
+
+```{r}
+#pdf("goseqbiasaktgse.pdf", height=4)
+gse_AKT3_pwf <- nullp(gse_AKT3_genes, "hg19", "ensGene")
+gse_AKT3_pwf %>% head
+#dev.off()
+```
+
+Use a method that does NOT correct for gene length.
+
+```{r}
+gse_AKT3_nobias <- goseq(gse_AKT3_pwf, "hg19", "ensGene", method = "Hypergeometric")
+gse_AKT3_nobias %>% head
+```
+
+# Interpret the results from the GO analysis.
+
+To add the genes that are in the GO categories, make a loop to pull the genes out of numDEInCat (What is in numDEInCat).
+
+```{r}
+genelists <- function(gse_AKT3_pwf, goterms, genome, ids){
+  gene2cat <- getgo(rownames(gse_AKT3_pwf), genome, ids)
+  cat2gene <- split(rep(names(gene2cat), sapply(gene2cat, length)),
+                    unlist(gene2cat, use.names = FALSE))
+  out <- list()
+  for(term in goterms){
+    tmp <- gse_AKT3_pwf[cat2gene[[term]],]
+    tmp <- rownames(tmp[tmp$DEgenes > 0, ])
+    out[[term]] <- tmp
+  }
+  out
+}
+
+goterms <- gse_AKT3_nobias$category
+gse_AKT3_go_list <- genelists(gse_AKT3_pwf, goterms, "hg19", "ensGene")
+```
+
+Add columns to gse_AKT3_nobias; over-represented adjusted P values and under-represented adjusted P values. 
+
+```{r}
+gse_AKT3_nobias$over_represented_adj_pvalue <- p.adjust(gse_AKT3_nobias$over_represented_pvalue, method = "BH")
+gse_AKT3_nobias$under_represented_adj_pvalue <- p.adjust(gse_AKT3_nobias$under_represented_pvalue, method = "BH")
+```
+
+### GO over-represented genes.
+
+Pull GO categories that are signifcantly over represented below a 0.05 FDR cutoff. Then, add the over represented GO categories to gse_AKT3_nobias.
+
+```{r}
+gse_AKT3_goCats_over <- gse_AKT3_nobias$category[p.adjust(gse_AKT3_nobias$over_represented_pvalue, method = "BH")<0.05]
+gse_AKT3_goCats_over %>% length
+gse_AKT3_over <- merge(gse_AKT3_goCats_over, gse_AKT3_nobias, by =1)
+gse_AKT3_over %>% head
+```
+
+List the GO categories.
+
+```{r}
+gse_AKT3_overNames <- gse_AKT3_over %>% dplyr::select(., x) %>% unlist()
+```
+
+Loop that will run through the GO categories and pull the significant genes that are relevant for that category.
+
+```{r}
+sigGOgenes <- c()
+for(gt in gse_AKT3_overNames){
+  GOiden <- gse_AKT3_go_list[gt] %>% unlist()
+  GOiden_en <- AnnotationDbi::select(org.Hs.eg.db, keys=GOiden, columns="SYMBOL", keytype = "ENSEMBL") %>% 
+    na.omit()
+  sigGOgenes <- c(sigGOgenes,
+                  paste(GOiden_en[,2], sep="", collapse="::"))
+}
+
+gse_AKT3_over$genes <- sigGOgenes
+```
+
+Edit the table (e.g. the order of the columns).
+
+```{r}
+gse_AKT3_over <- gse_AKT3_over[,c(1,6,7,4,5,2,8,3,9,10)]
+colnames(gse_AKT3_over) <- c("GO Category", "GO Term", "Ontology", 
+                           "Number of Differentially Expressed Genes in Category", "Total Number of Genes in Category",
+                           "P.Value for Over-represented Differentially Expressed Genes", "Adjusted P.Value for Over-represented Differentially Expressed Genes",
+                           "P.Value for Under-represented Differentially Expressed Genes", "Adjusted P.Value for Under-represented Differentially Expressed Genes",
+                           "List of Differentially Expressed Genes in Category")
+
+gse_AKT3_over %>% head()
+```
+
+### GO under-represented genes.
+
+Pull GO categories that are signifcantly under represented below a 0.05 FDR cutoff. Then, add the under represented GO categories to gse_AKT3_nobias.
+
+```{r}
+gse_AKT3_goCats_under <- gse_AKT3_nobias$category[p.adjust(gse_AKT3_nobias$under_represented_pvalue, method = "BH") < 0.05]
+gse_AKT3_goCats_under %>% length
+
+#write.csv(gse_AKT3_over, file = "GO_GSE_AKT3_all_over.csv")
+```
+
+No significantly under-represented genes.
+
+
+
+Key outputs:
+write.csv(gse_AKT3_over, file = "GO_GSE_AKT3_over.csv")

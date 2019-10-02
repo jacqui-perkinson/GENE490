@@ -1,0 +1,188 @@
+---
+title: "TCGA_limma_AKT1_3rds"
+author: "Jacqui Perkinson"
+date: "7/19/2019"
+output: html_document
+---
+
+Load required packages.
+
+```{r}
+library(here)
+library(dplyr)
+library(ggplot2)
+library(limma)
+library(org.Hs.eg.db)
+
+options(width=80)
+```
+
+# Load TCGA setup objects
+
+```{r}
+load("~/Desktop/Gastric_Cancer_Datasets/Saved/TCGA_setup.Rdata")
+```
+
+# Limma Analysis.
+
+### Set up the high AKT1 and low AKT1 expression groups (low = 1/3 and high = 2/3) for limma analysis.
+
+```{r}
+AKT1_data_sorted <- sort(tcga_AKT1_data)
+threshold_1 <- AKT1_data_sorted[138] # 7.207709
+```
+
+Split AKT1 expression data by 3rds, assign the groups "high = 1" or "low = 0".
+
+```{r}
+tcga_AKT1_data_extr <- ifelse(tcga_AKT1_data <= threshold_1, "0", "1")
+tcga_AKT1_data_extr %>% table
+tcga_AKT1_data_extr %>% head
+```
+
+### Find the differentially expressed genes between the AKT1 high and AKT1 low groups.
+
+Create the design matrix and rename columns.
+
+```{r}
+tcga_AKT1_design_extr <- model.matrix(~ifelse(tcga_AKT1_data <= threshold_1, 0, 1))
+colnames(tcga_AKT1_design_extr) <- c("low", "highVSlow")
+tcga_AKT1_design_extr %>% head
+```
+
+Fit a linear model.
+
+```{r}
+tcga_AKT1_fit_extr <- lmFit(tcga_expDat, tcga_AKT1_design_extr)
+tcga_AKT1_fit_extr <- eBayes(tcga_AKT1_fit_extr)
+tcga_AKT1_tt_extr <- topTable(tcga_AKT1_fit_extr, coef = "highVSlow", adjust = "BH", n = nrow(tcga_expDat))
+```
+
+Preview topTable output.
+
+```{r}
+tcga_AKT1_tt_extr %>% dim
+tcga_AKT1_tt_extr %>% head
+```
+
+Pull the significant differentially expressed genes between high AKT1 and low AKT1 expression groups.
+
+```{r}
+sum(tcga_AKT1_tt_extr$adj.P.Val<0.05)
+```
+
+Pull a list of the genes with an adjusted P value < 0.05.
+
+```{r}
+tcga_AKT1_sigGen_extr <- tcga_AKT1_tt_extr %>%  
+  mutate(., Gene=rownames(tcga_AKT1_tt_extr)) %>% 
+  filter(., adj.P.Val < 0.05) %>% 
+  dplyr::select(., Gene)
+
+tcga_AKT1_sigGen_extr %>% dim
+tcga_AKT1_sigGen_extr %>% head
+```
+
+Significant genes with a FC above 2 (negative or positive).
+
+```{r}
+tcga_AKT1_fc2 <- tcga_AKT1_tt_extr %>%  
+  mutate(., Gene=rownames(tcga_AKT1_tt_extr)) %>% 
+  filter(., adj.P.Val < 0.05 & 2^abs(tcga_AKT1_tt_extr$logFC) >= 2) %>% 
+  dplyr::select(., Gene)
+
+tcga_AKT1_fc2 %>% dim
+```
+
+Volcano plot.
+
+```{r}
+#limma::volcanoplot(tcga_AKT1_fit_extr, coef = "highVSlow")
+
+#pdf("tcga_akt1_volcano.pdf", height=4)
+a <- ggplot(tcga_AKT1_tt_extr, aes(x= logFC, y = -log10(adj.P.Val))) + geom_point(alpha=1, size=0.5) + xlab("log2 fold change") + ylab("-log10 (adjusted p-value)") + xlim(-2, 2)
+b <- a + geom_vline(xintercept= c(-1, 1), color = "red")
+b + geom_hline(yintercept= 1.301, color = "red") + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"))
+#dev.off()
+```
+
+# Convert gene symbols to Ensembl.
+
+Create and data frame where genes symbols matched to their ensembl code (using toptable object - tcga_AKT1_tt_extr).
+
+```{r}
+tcga_AKT1_sym2ens_extr <- AnnotationDbi::select(org.Hs.eg.db, keys = rownames(tcga_AKT1_tt_extr), columns = "ENSEMBL", keytype = "SYMBOL", multiVals ='first')
+tcga_AKT1_sym2ens_extr %>% head
+```
+
+Check the length, they need to be the same to assign row names as ensembl codes.
+
+```{r}
+tcga_AKT1_sym2ens_extr %>% nrow
+tcga_AKT1_tt_extr %>% nrow
+```
+
+Matching between genes and ensembl occur 1:many, can correct this by matching genes to the first listed ensembl.
+
+```{r}
+tcga_AKT1_sym2ens_extr <- tcga_AKT1_sym2ens_extr[ match(rownames(tcga_AKT1_tt_extr), tcga_AKT1_sym2ens_extr[,1]) ,2]
+```
+
+Again, check the length as it should be the same now.
+
+```{r}
+tcga_AKT1_sym2ens_extr %>% length
+tcga_AKT1_tt_extr %>% nrow
+```
+
+Add ensembl code (AKT1_sym2ens) to the topTable from limma (tcga_AKT1_tt) as rownames.
+
+```{r}
+tcga_AKT1_tt_en_extr <- cbind(tcga_AKT1_tt_extr, tcga_AKT1_sym2ens_extr)
+tcga_AKT1_tt_en_extr <- tcga_AKT1_tt_en_extr %>% na.omit()
+tcga_unique_en_extr <- tcga_AKT1_tt_en_extr$tcga_AKT1_sym2ens_extr %>% as.character %>% make.unique()
+tcga_AKT1_tt_en_extr <- cbind(tcga_AKT1_tt_en_extr, tcga_unique_en_extr)
+rownames(tcga_AKT1_tt_en_extr) <- tcga_AKT1_tt_en_extr$tcga_unique_en_extr
+tcga_AKT1_tt_en_extr %>% head()
+tcga_AKT1_tt_en_extr <- tcga_AKT1_tt_en_extr[,1:6]
+```
+
+Pull the significant differentially expressed genes
+
+```{r}
+sum(tcga_AKT1_tt_en_extr$adj.P.Val<0.05)
+```
+
+Pull a list of the genes with an adjusted P value < 0.05.
+
+```{r}
+tcga_AKT1_sigGen_en_extr <- tcga_AKT1_tt_en_extr %>%  
+  mutate(., Gene=rownames(tcga_AKT1_tt_en_extr)) %>% 
+  filter(., adj.P.Val < 0.05) %>% 
+  dplyr::select(., Gene)
+
+tcga_AKT1_sigGen_en_extr %>% dim
+tcga_AKT1_sigGen_en_extr %>% head
+```
+
+Significant genes with a FC above two (negative or positive) with Ensembl IDs.
+
+```{r}
+tcga_AKT1_fc2_en <- tcga_AKT1_tt_en_extr %>%  
+   mutate(., Gene=rownames(tcga_AKT1_tt_en_extr)) %>% 
+  filter(., adj.P.Val < 0.05 & 2^abs(tcga_AKT1_tt_en_extr$logFC) >= 2) %>% 
+  dplyr::select(., Gene)
+
+tcga_AKT1_fc2_en %>% dim
+tcga_AKT1_fc2_en %>% head
+```
+
+
+
+Key output:
+tcga_AKT1_tt_extr - toptable output of differentially expressed genes between AKT3 high and AKT3 low groups (GENE SYMBOLS)
+tcga_AKT1_tt_en_extr - toptable output of differentially expressed genes between AKT3 high and AKT3 low groups (ENSEMBL)
+tcga_AKT1_sigGen_extr - list of significantly differentially expressed genes between AKT3 high and AKT3 low groups (GENE SYMBOLS)
+tcga_AKT1_sigGen_en_extr - list of significantly differentially expressed genes between AKT3 high and AKT3 low groups (ENSEMBL)
+tcga_AKT1_fc2 - list of significantly differentially expressed genes between AKT3 high and AKT3 low groups with a FC more than 2 (GENE SYMBOLS)
+tcga_AKT1_fc2_en - list of significantly differentially expressed genes between AKT3 high and AKT3 low groups with a FC more than 2 (ENSEMBL)

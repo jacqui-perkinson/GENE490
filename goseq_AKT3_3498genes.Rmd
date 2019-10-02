@@ -1,0 +1,172 @@
+---
+title: "goseq_AKT3_3498genes"
+author: "Jacqui Perkinson"
+date: "7/27/2019"
+output: html_document
+---
+
+Load required packages.
+
+```{r message=FALSE}
+library(dplyr)
+library(ggplot2)
+library(goseq)
+library(org.Hs.eg.db)
+```
+
+Load required objects.
+
+```{r}
+load("~/Desktop/Gastric_Cancer_Datasets/Saved/venn_AKT_genelists_output.Rdata")
+```
+
+# 3498 genes associating with AKT1.
+
+Total genes in both data sets.
+
+```{r}
+totalgns %>% length()
+```
+
+Make 190 genes 1, and total genes 0.
+
+```{r}
+x <- as.integer(ifelse(totalgns %in% AKT3_only_allsig, 1, 0))
+names(x) <- totalgns
+table(x)
+class(x)
+```
+
+Correct for length bias
+
+```{r}
+#pdf("goseqbias3498.pdf", height=4)
+pwf <- nullp(x, "hg19", "ensGene")
+pwf %>% head
+#dev.off()
+```
+
+Do not correct for lenght bias (as genes are manual selected by me)
+
+```{r}
+nobias <- goseq(pwf, "hg19", "ensGene", method = "Hypergeometric")
+nobias %>% head
+```
+
+### Interpret the results from the GO analysis.
+
+To add the genes that are in the GO categories, make a loop to pull the genes out of numDEInCat (What is in numDEInCat).
+
+```{r}
+genelists <- function(pwf, goterms, genome, ids){
+  gene2cat <- getgo(rownames(pwf), genome, ids)
+  cat2gene <- split(rep(names(gene2cat), sapply(gene2cat, length)),
+                    unlist(gene2cat, use.names = FALSE))
+  out <- list()
+  for(term in goterms){
+    tmp <- pwf[cat2gene[[term]],]
+    tmp <- rownames(tmp[tmp$DEgenes > 0, ])
+    out[[term]] <- tmp
+  }
+  out
+}
+
+goterms <- nobias$category
+go_list <- genelists(pwf, goterms, "hg19", "ensGene")
+```
+
+Add columns to nobias; over-represented adjusted P values and under-represented adjusted P values. 
+
+```{r}
+nobias$over_represented_adj_pvalue <- p.adjust(nobias$over_represented_pvalue, method = "BH")
+nobias$under_represented_adj_pvalue <- p.adjust(nobias$under_represented_pvalue, method = "BH")
+```
+
+### Over represented.
+
+Pull GO categories that are signifcantly over represented below a 0.05 FDR cutoff. Then, add the over represented GO categories to nobias.
+
+```{r}
+goCats_over <- nobias$category[p.adjust(nobias$over_represented_pvalue, method = "BH")<0.05]
+goCats_over %>% length
+over <- merge(goCats_over, nobias, by =1)
+over %>% head
+```
+
+List the GO categories.
+
+```{r}
+overNames <- over %>% dplyr::select(., x) %>% unlist()
+```
+
+Loop that will run through the GO categories and pull the significant genes that are relevant for that category.
+
+```{r}
+sigGOgenes <- c()
+for(gt in overNames){
+  GOiden <- go_list[gt] %>% unlist()
+  GOiden_en <- AnnotationDbi::select(org.Hs.eg.db, keys=GOiden, columns="SYMBOL", keytype = "ENSEMBL") %>% 
+    na.omit()
+  sigGOgenes <- c(sigGOgenes,
+                  paste(GOiden_en[,2], sep="", collapse="::"))
+}
+
+over$genes <- sigGOgenes
+```
+
+Edit the table (e.g. the order of the columns).
+
+```{r}
+over <- over[,c(1,6,7,4,5,2,8,3,9,10)]
+colnames(over) <- c("GO Category", "GO Term", "Ontology", 
+                    "Number of Differentially Expressed Genes in Category", "Total Number of Genes in Category",
+                    "P.Value for Over-represented Differentially Expressed Genes", "Adjusted P.Value for Over-represented Differentially Expressed Genes",
+                    "P.Value for Under-represented Differentially Expressed Genes", "Adjusted P.Value for Under-represented Differentially Expressed Genes",
+                    "List of Differentially Expressed Genes in Category")
+
+#write.csv(over, file = "GO_3298_over.csv")
+```
+
+### Under represented.
+
+Pull GO categories that are signifcantly under represented below a 0.05 FDR cutoff. Then, add the over represented GO categories to nobias.
+
+```{r}
+goCats_under <- nobias$category[p.adjust(nobias$under_represented_pvalue, method = "BH")<0.05]
+goCats_under %>% length
+#under <- merge(goCats_under, nobias, by =1)
+#under %>% head
+```
+
+List the GO categories.
+
+```{r}
+#underNames <- under %>% dplyr::select(., x) %>% unlist()
+```
+
+Loop that will run through the GO categories and pull the significant genes that are relevant for that category.
+
+```{r}
+#sigGOgenes <- c()
+#for(gt in underNames){
+#  GOiden <- go_list[gt] %>% unlist()
+#  GOiden_en <- AnnotationDbi::select(org.Hs.eg.db, keys=GOiden, columns="SYMBOL", keytype = "ENSEMBL") %>% 
+#    na.omit()
+#  sigGOgenes <- c(sigGOgenes,
+#                  paste(GOiden_en[,2], sep="", collapse="::"))
+#}
+
+#under$genes <- sigGOgenes
+```
+
+Edit the table (e.g. the order of the columns).
+
+```{r}
+#under <- under[,c(1,6,7,4,5,3,9,2,8,10)]
+#colnames(under) <- c("GO Category", "GO Term", "Ontology", 
+#                           "Number of Differentially Expressed Genes in Category", "Total Number of Genes in Category",
+#                           "P.Value for Under-represented Differentially Expressed Genes", "Adjusted P.Value for #Under-represented Differentially Expressed Genes",
+#                           "P.Value for Over-represented Differentially Expressed Genes", "Adjusted P.Value for #Over-represented Differentially Expressed Genes",
+#                           "List of Differentially Expressed Genes in Category")
+```
+

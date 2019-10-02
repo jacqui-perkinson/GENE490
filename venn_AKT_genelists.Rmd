@@ -1,0 +1,317 @@
+---
+title: "venn_AKT_genelists"
+author: "Jacqui Perkinson"
+date: "7/26/2019"
+output: html_document
+---
+
+Load required packages.
+
+```{r message=FALSE}
+library(dplyr)
+library(ggplot2)
+library(VennDiagram)
+library(org.Hs.eg.db)
+library(UpSetR)
+```
+
+Load required objects.
+
+```{r}
+load("~/Desktop/Gastric_Cancer_Datasets/Saved/GSE_AKT1_3rds_limma_output.Rdata")
+load("~/Desktop/Gastric_Cancer_Datasets/Saved/GSE_AKT3_3rds_limma_output.Rdata")
+load("~/Desktop/Gastric_Cancer_Datasets/Saved/TCGA_AKT1_3rds_limma_output.Rdata")
+load("~/Desktop/Gastric_Cancer_Datasets/Saved/TCGA_AKT3_3rds_limma_output.Rdata")
+```
+
+# Find genes that only associate with AKT3 (filtering on fold change)
+
+```{r}
+ven <- list("GSE AKT1 Genes (Sig)" = gse_AKT1_sigGen_en_extr[,1], "TCGA AKT1 Genes (sig)" = tcga_AKT1_sigGen_en_extr[,1], "GSE AKT3 Genes (FC > 2)" = gse_AKT3_fc2_en[,1], "TCGA AKT3 Genes (FC > 2)" = tcga_AKT3_fc2_en[,1])
+gplots::venn(ven)
+```
+
+Upset plot (shows 51 genes that associate with AKT3)
+
+```{r}
+pdf("51upset.pdf", height=4)
+listInput_1 <- list("TCGA AKT3 Genes (FC)" = tcga_AKT3_fc2_en[,1], "GEO AKT3 Genes (FC)" = gse_AKT3_fc2_en[,1], "TCGA AKT1 Genes" = tcga_AKT1_sigGen_en_extr[,1],"GEO AKT1 Genes" = gse_AKT1_sigGen_en_extr[,1])
+
+UpSetR::upset(fromList(listInput_1), order.by = "freq", mainbar.y.max = 5000, text.scale = 1.3)
+dev.off()
+
+pdf("3485upset.pdf", height=4)
+listInput_2 <- list("TCGA AKT3 Genes" = tcga_AKT3_sigGen_en_extr[,1], "GEO AKT3 Genes" = gse_AKT3_sigGen_en_extr[,1], "TCGA AKT1 Genes" = tcga_AKT1_sigGen_en_extr[,1], "GEO AKT1 Genes" = gse_AKT1_sigGen_en_extr[,1])
+
+UpSetR::upset(fromList(listInput_2), order.by = "freq", text.scale = 1.3)
+dev.off
+```
+
+Find the intersect between GSE and TCGA AKT3 genes with FC > 2.
+
+```{r}
+AKT3_FC <- intersect(tcga_AKT3_fc2_en[,1], gse_AKT3_fc2_en[,1])
+AKT3_FC %>% head
+```
+
+Group GSE and TCGA AKT1 significant genes.
+
+```{r}
+AKT1_sig <- union(gse_AKT1_sigGen_en_extr[,1], tcga_AKT1_sigGen_en_extr[,1])
+AKT1_sig %>% head
+```
+
+Find the difference between all AKT1 genes and AKT3 genes with FC > 2.
+
+```{r}
+AKT3_only <- setdiff(AKT3_FC, AKT1_sig)
+AKT3_only
+```
+
+51 genes.
+
+### Convert from ensembl to gene symbols
+
+Create and object with genes matched to their ensembl code (using AKT3_only).
+
+```{r}
+AKT3_only_gsym <- as.data.frame(AKT3_only)
+rownames(AKT3_only_gsym) <- AKT3_only_gsym[,1]
+
+gsym <- AnnotationDbi::select(org.Hs.eg.db, keys = rownames(AKT3_only_gsym), columns = "SYMBOL", keytype = "ENSEMBL", multiVals ='first')
+gsym %>% head
+gsym %>% dim
+```
+
+1:1 Mapping
+
+```{r}
+AKT3_final <- gsym[,2]
+AKT3_final %>% length
+AKT3_final %>% class
+AKT3_final %>% sort
+```
+
+Formatting the list of genes
+
+```{r}
+# cat(AKT3_final, sep = '\n')
+# cat(AKT3_final)
+
+# sink("~/Desktop/AKT3_sig_fc.txt")
+# print(cat(AKT3_final, sep = '\n'))
+# sink()
+```
+
+
+
+# For gene ontology - find genes that only associate with AKT3 (without filtering on fold change)
+
+Compare GSE AKT1, GSE AKT3, TCGA AKT1, TCGA AKT3 significant genes. 
+
+```{r}
+ven <- list("GSE AKT1 Genes (sig)" = gse_AKT1_sigGen_en_extr[,1], "TCGA AKT1 Genes (sig)" = tcga_AKT1_sigGen_en_extr[,1], "GSE AKT3 Genes (sig)" = gse_AKT3_sigGen_en_extr[,1], "TCGA AKT3 Genes (sig)" = tcga_AKT3_sigGen_en_extr[,1])
+gplots::venn(ven)
+```
+
+Upset plot (shows 3485 genes that associate with AKT3, not filtered by FC)
+
+```{r}
+#pdf("3485upset.pdf", height=4)
+listInput_2 <- list("GEO AKT1 Genes (sig)" = gse_AKT1_sigGen_en_extr[,1], "TCGA AKT1 Genes (sig)" = tcga_AKT1_sigGen_en_extr[,1], "GSE AKT3 Genes (sig)" = gse_AKT3_sigGen_en_extr[,1], "TCGA AKT3 Genes (sig)" = tcga_AKT3_sigGen_en_extr[,1])
+
+UpSetR::upset(fromList(listInput_2), order.by = "freq")
+#dev.off
+
+pdf("allupset.pdf", height = 5, width = 8)
+listInput_all <- list("TCGA AKT3 Genes (FC)" = tcga_AKT3_fc2_en[,1], "GEO AKT3 Genes (FC)" = gse_AKT3_fc2_en[,1], "TCGA AKT3 Genes" = tcga_AKT3_sigGen_en_extr[,1], "GEO AKT3 Genes" = gse_AKT3_sigGen_en_extr[,1],"TCGA AKT1 Genes" = tcga_AKT1_sigGen_en_extr[,1], "GEO AKT1 Genes" = gse_AKT1_sigGen_en_extr[,1])
+
+UpSetR::upset(fromList(listInput_all), nsets = 6, order.by = "freq")
+dev.off
+
+
+```
+
+Find the intersect between GSE and TCGA AKT3 genes
+
+```{r}
+AKT3_gns <- intersect(gse_AKT3_sigGen_en_extr[,1], tcga_AKT3_sigGen_en_extr[,1])
+AKT3_gns %>% head
+```
+
+Group GSE and TCGA AKT1 significant genes.
+
+```{r}
+AKT1_gns <- union(gse_AKT1_sigGen_en_extr[,1], tcga_AKT1_sigGen_en_extr[,1])
+AKT1_gns %>% head
+```
+
+Find the difference between all AKT1 genes and AKT3 genes
+
+```{r}
+AKT3_only_allsig <- setdiff(AKT3_gns, AKT1_gns)
+AKT3_only_allsig %>% length()
+```
+
+3485 genes.
+
+### Convert ensembl to gene symbols.
+
+Create and object with genes matched to their ensembl code (using AKT3_only_allsig).
+
+```{r}
+AKT3_only_allsig_gsym <- as.data.frame(AKT3_only_allsig)
+rownames(AKT3_only_allsig_gsym) <- AKT3_only_allsig_gsym[,1]
+
+gsym_all <- AnnotationDbi::select(org.Hs.eg.db, keys = rownames(AKT3_only_allsig_gsym), columns = "SYMBOL", keytype = "ENSEMBL", multiVals ='first')
+gsym_all %>% head
+gsym_all %>% dim
+```
+
+1:many mapping
+
+```{r}
+AKT3_allsig <- gsym_all[,2]
+AKT3_allsig %>% length
+AKT3_allsig %>% class
+```
+
+Formatting the list of genes
+
+```{r}
+# cat(AKT3_allsig, sep = '\n')
+# cat(AKT3_allsig)
+
+# sink("~/Desktop/AKT3_sig_all.txt")
+# print(cat(AKT3_allsig, sep = '\n'))
+# sink()
+```
+
+
+
+# For gene ontology - find genes that only associate with AKT1 (without filtering on fold change - as there are zero genes with FC > 2).
+
+```{r}
+ven_1 <- list("GSE AKT3 Genes (sig)" = gse_AKT3_sigGen_en_extr[,1], "TCGA AKT3 Genes (sig)" = tcga_AKT3_sigGen_en_extr[,1], "GSE AKT1 Genes (sig)" = gse_AKT1_sigGen_en_extr[,1], "TCGA AKT1 Genes (sig)" = tcga_AKT1_sigGen_en_extr[,1])
+gplots::venn(ven_1)
+```
+
+Upset plot (shows 190 genes that associate with AKT1, not filtered by FC)
+
+```{r}
+#pdf("190upset.pdf", height=4)
+listInput_3 <- list("GSE AKT3 Genes (sig)" = gse_AKT3_sigGen_en_extr[,1], "TCGA AKT3 Genes (sig)" = tcga_AKT3_sigGen_en_extr[,1], "GSE AKT1 Genes (sig)" = gse_AKT1_sigGen_en_extr[,1], "TCGA AKT1 Genes (sig)" = tcga_AKT1_sigGen_en_extr[,1])
+
+UpSetR::upset(fromList(listInput_3), order.by = "freq")
+#dev.off()
+```
+
+Find the intersect between GSE and TCGA AKT1 genes
+
+```{r}
+AKT1_all <- intersect(tcga_AKT1_sigGen_en_extr[,1], gse_AKT1_sigGen_en_extr[,1])
+AKT1_all %>% head
+```
+
+Group GSE and TCGA AKT3 significant genes.
+
+```{r}
+AKT3_all <- union(gse_AKT3_sigGen_en_extr[,1], tcga_AKT3_sigGen_en_extr[,1])
+AKT3_all %>% head
+```
+
+Find the difference between all AKT1 genes and AKT3 genes.
+
+```{r}
+AKT1_only_allsig <- setdiff(AKT1_all, AKT3_all)
+AKT1_only_allsig %>% length()
+```
+
+190 genes.
+
+### Convert to gene symbols from ensembl
+
+Create and object with genes matched to their ensembl code (using AKT3_only).
+
+```{r}
+AKT1_only_gsym <- as.data.frame(AKT1_only_allsig)
+rownames(AKT1_only_gsym) <- AKT1_only_gsym[,1]
+
+gsym_1 <- AnnotationDbi::select(org.Hs.eg.db, keys = rownames(AKT1_only_gsym), columns = "SYMBOL", keytype = "ENSEMBL", multiVals ='first')
+gsym_1 %>% head
+gsym_1 %>% dim
+```
+
+1:1 Mapping
+
+```{r}
+AKT1_final <- gsym_1[,2]
+AKT1_final %>% length
+AKT1_final %>% class
+```
+
+Formatting the list of genes
+
+```{r}
+# cat(AKT1_final, sep = '\n')
+# cat(AKT1_final)
+
+# sink("~/Desktop/AKT1_sig_all.txt")
+# print(cat(AKT1_final, sep = '\n'))
+# sink()
+```
+
+
+
+# Match AKT3 genes (51) with FC values to help select druggable targets.
+
+Get toptable values for 51 key AKT3 genes for TCGA data.
+
+```{r}
+tcga_gns_keep <- which(rownames(tcga_AKT3_tt_en_extr) %in% AKT3_only)
+tcga_gns_keep %>% length()
+
+tcga_tt_AKT3_keygenes <- tcga_AKT3_tt_en_extr[tcga_gns_keep,]
+tcga_tt_AKT3_keygenes %>% dim()
+tcga_tt_AKT3_keygenes %>% head
+
+tcga_tt_AKT3_keygenes_gsym <- cbind(tcga_tt_AKT3_keygenes, gsym)
+rownames(tcga_tt_AKT3_keygenes_gsym) <- tcga_tt_AKT3_keygenes_gsym$SYMBOL
+tcga_tt_AKT3_keygenes_gsym <- tcga_tt_AKT3_keygenes_gsym[,1:6]
+tcga_tt_AKT3_keygenes_gsym %>% head
+
+#write.csv(tcga_tt_AKT3_keygenes_gsym, file = "tt51tcga.csv")
+```
+
+Get toptable values for 51 key AKT3 genes for GSE data.
+
+```{r}
+gse_gns_keep <- which(rownames(gse_AKT3_tt_en_extr) %in% AKT3_only)
+gse_gns_keep %>% length()
+
+gse_tt_AKT3_keygenes <- gse_AKT3_tt_en_extr[gse_gns_keep,]
+gse_tt_AKT3_keygenes %>% dim()
+gse_tt_AKT3_keygenes %>% head
+
+gse_tt_AKT3_keygenes_gsym <- cbind(gse_tt_AKT3_keygenes, gsym)
+rownames(gse_tt_AKT3_keygenes_gsym) <- gse_tt_AKT3_keygenes_gsym$SYMBOL
+gse_tt_AKT3_keygenes_gsym <- gse_tt_AKT3_keygenes_gsym[,1:6]
+gse_tt_AKT3_keygenes_gsym %>% head
+
+#write.csv(gse_tt_AKT3_keygenes_gsym, file = "tt51geo.csv")
+```
+
+Key output:
+AKT3_final - list of 51 genes (gene symbols)
+AKT3_only - list of 51 genes (ensembl IDs)
+AKT3_only_allsig - list of 3485 genes, not filtered by fold change (gene symbols)
+AKT3_allsig - list of 3498 genes, not filtered by fold change (ensembl IDs)
+AKT1_only_allsig - list of 190 genes, not filtered by fold change (gene symbols)
+AKT1_final - list of 190 genes, not filtered by fold change (ensembl IDs)
+
+tcga_tt_AKT3_keygenes - toptable of 51 genes for TCGA data (gene symbols)
+tcga_tt_AKT3_keygenes_gsym - toptable of 51 genes for TCGA data (ensembl IDs)
+gse_tt_AKT3_keygenes - toptable of 51 genes for GSE data (gene symbols)
+gse_tt_AKT3_keygenes_gsym - toptable of 51 genes for GSE data (ensembl IDs
+
+

@@ -1,0 +1,83 @@
+---
+title: "siRNA_AKT3_3498genes"
+author: "Jacqui Perkinson"
+date: "7/27/2019"
+output: html_document
+---
+
+Load required packages.
+
+```{r message=FALSE}
+library(dplyr)
+```
+
+Load required objects.
+
+```{r}
+load("~/Desktop/Gastric_Cancer_Datasets/Saved/venn_AKT_genelists_output.Rdata")
+```
+
+# siRNA synthetic lethality screen for the 3498 genes that associate with only AKT3.
+
+Load all genes.
+
+```{r}
+allGns <- read.csv("~/Desktop/Gastric_Cancer_Datasets/Data/SL_tests/all_genes_tyler.csv")
+```
+
+3498 genes 
+
+```{r}
+R_genes <- as.data.frame(AKT3_allsig)
+```
+
+Match the 3498 genes with their SL ratio score from the siRNA test and retrieve only the relevant data.
+
+```{r}
+geneCoords <- match(as.vector(R_genes[,1]),as.vector(allGns[,1]))
+R_genes_matched <- allGns[geneCoords,]
+R_genes_matched <- na.omit(R_genes_matched)
+R_genes_matched %>% dim()
+#write.csv(R_genes_matched, file = "siRNA3498.csv")
+```
+
+Plot
+
+```{r}
+pdf("siRNA3498.pdf", height=4)
+x<-allGns
+y<-R_genes_matched
+# Set max and min range for plot (drop top and bottom 0.1% of SL scores)
+mx<-quantile(x[,4],0.999)
+mn<-quantile(x[,4],0.001)
+# Perform KS test of all genes versus all GPCRs (including olfs)
+ksp<-ks.test(x[,4], y[,4])$p.value
+# Put p-value info in character string for legend title
+kst<-paste("KS p-value= ",round(ksp,4),sep='')
+# Make density plot for all genes
+d1<-density(x[,4])$y
+d2<-density(y[,4])$y
+plot(density(x[,4]),col='blue',xlim=c(mn,mx), ylim=c(0,max(c(d1,d2))),
+     xlab="Cell viability ratio of the 3498 AKT3-associated genes",ylab="Density")
+# Add legend
+legend(1.25,1.8,c("All", "3498 Genes"),fill=c(4,2), title=kst,cex=0.8)
+# Add density plot for pathway of interest
+lines(density(y[,4],na.rm=T),type='l',col='red')
+
+# Extra:
+# Get maximum (left peak):
+d1max<-density(x[,4])
+d1max$x[which.max(d1max$y)]
+# All genes max is 0.995912
+d2max<-density(y[1:3355,4])
+d2max$x[which.max(d2max$y)]
+# Non sensory GPCRs left (SL) peak: 0.9959945
+dev.off()
+```
+
+
+
+
+
+
+

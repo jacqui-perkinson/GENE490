@@ -1,0 +1,137 @@
+---
+title: "metagene_AKT1_190genes"
+author: "Jacqui Perkinson"
+date: "7/27/2019"
+output: html_document
+---
+
+Load required packages.
+
+```{r message=FALSE}
+library(dplyr)
+library(gplots)
+```
+
+Load required objects.
+
+```{r}
+load("~/Desktop/Gastric_Cancer_Datasets/Saved/venn_AKT_genelists_output.Rdata")
+load("~/Desktop/Gastric_Cancer_Datasets/Saved/expDat_clinDat_output.Rdata")
+```
+
+Objects for heatmaps.
+
+```{r}
+genes190 <- AKT1_final
+g_expdat <- gse62254_expDat
+t_expdat <- tcga_expDat
+```
+
+# Metagene of 190 genes (associated with AKT3, filtered on fold change).
+
+### GSE expression data.
+
+Expression data for 190 genes.
+
+```{r}
+gse_keep_genes190 <- which(rownames(g_expdat) %in% genes190)
+gse_expData_genes190 <- g_expdat[gse_keep_genes190,]
+```
+
+Scale the expression data.
+
+```{r}
+gse_gn190_scaled <- t(apply(gse_expData_genes190,1,function (x) (x-mean(x))/sd(x)))
+gse_gn190_scaled[gse_gn190_scaled< -3] <- -3; gse_gn190_scaled[gse_gn190_scaled> 3] <- 3
+```
+
+Create a heatmap.
+
+```{r}
+pdf("190hm_GEO_premetagene.pdf", height=4)
+heatmap.2(gse_gn190_scaled, trace = "none", scale = "none", col = bluered(50), labRow = "", labCol = "", distfun = function(x) as.dist(1-cor(t(x))) )
+dev.off()
+```
+
+Create a metagene.
+
+```{r}
+gse_gn190_metagene <- svd(gse_gn190_scaled)$v[,1]
+```
+
+Rescale to 0,1 range.
+
+```{r}
+gse_gn190_metagene_rank <- rank(gse_gn190_metagene)/length(gse_gn190_metagene)
+```
+
+Assign a colour scale (for the heatmap).
+
+```{r}
+gse_gn190_metagene_col <- bluered(length(gse_gn190_metagene))[rank(gse_gn190_metagene)]
+```
+
+Order the columns based on metagene value - shows a gradient of expression summarised with each gene.
+
+```{r}
+pdf("190metagene_GEO.pdf", height=4)
+gse_gn190_metagene_ord <- order(gse_gn190_metagene_rank)
+heatmap.2(gse_gn190_scaled[,gse_gn190_metagene_ord], trace='none', scale='none', Colv=F,
+          ColSideColors=gse_gn190_metagene_col[gse_gn190_metagene_ord], key=F, col=bluered(50),
+          labCol= "", labRow= "")
+dev.off()
+```
+
+### TCGA expression data.
+
+Expression data for 190 genes.
+
+```{r}
+tcga_keep_genes190 <- which(rownames(t_expdat) %in% genes190)
+tcga_expData_genes190 <- t_expdat[tcga_keep_genes190,]
+```
+
+Scale the expression data.
+
+```{r}
+tcga_gn190_scaled <- t(apply(tcga_expData_genes190,1,function (x) (x-mean(x))/sd(x)))
+tcga_gn190_scaled[tcga_gn190_scaled< -3] <- -3; tcga_gn190_scaled[tcga_gn190_scaled> 3] <- 3
+```
+
+Create a heatmap.
+
+```{r}
+pdf("190hm_TCGA_premetagene.pdf", height=4)
+heatmap.2(tcga_gn190_scaled, trace = "none", scale = "none", col = bluered(50), labRow = "", labCol = "", distfun = function(x) as.dist(1-cor(t(x))) )
+dev.off()
+```
+
+Create a metagene.
+
+```{r}
+tcga_gn190_metagene <- svd(tcga_gn190_scaled)$v[,1]
+```
+
+Rescale to 0,1 range.
+
+```{r}
+tcga_gn190_metagene_rank <- rank(tcga_gn190_metagene)/length(tcga_gn190_metagene)
+```
+
+Assign a colour scale (for the heatmap).
+
+```{r}
+tcga_gn190_metagene_col <- bluered(length(tcga_gn190_metagene))[rank(tcga_gn190_metagene)]
+```
+
+Order the columns based on metagene value - shows a gradient of expression summarised with each gene.
+
+```{r}
+pdf("190metagene_TCGA.pdf", height=4)
+tcga_gn190_metagene_ord <- order(tcga_gn190_metagene_rank)
+heatmap.2(tcga_gn190_scaled[,tcga_gn190_metagene_ord], trace='none', scale='none', Colv=F,
+          ColSideColors=tcga_gn190_metagene_col[tcga_gn190_metagene_ord], key=F, col=bluered(50),
+          labCol= "", labRow= "")
+dev.off()
+```
+

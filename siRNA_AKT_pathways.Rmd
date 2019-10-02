@@ -1,0 +1,455 @@
+---
+title: "siRNA_AKT_pathways"
+author: "Jacqui Perkinson"
+date: "7/27/2019"
+output: html_document
+---
+
+Load required packages.
+
+```{r message=FALSE}
+library(dplyr)
+```
+
+Load all siRNA genes.
+
+```{r}
+allGenes <- read.csv("~/Desktop/Gastric_Cancer_Datasets/Data/SL_tests/all_genes_tyler.csv")
+```
+
+# CD28_dependent_PI3K_Akt_signaling
+
+```{r}
+pdf("CD28_dependent_PI3K_Akt_signaling.pdf", height=4, width = 8)
+a <- read.csv("~/Desktop/Gastric_Cancer_Datasets/Data/SL_tests/CD28_dependent_PI3K_Akt_signaling.csv")
+
+reactome <- a
+
+MolNam <- as.character(reactome$MoleculeName)
+react <- reactome[,-3]
+MolNamSplit <- t(strsplit(MolNam, split = " ", fixed = TRUE) %>% as.data.frame())
+react$Name <- MolNamSplit[,2]
+geneCoordinates<-match(as.vector(react[,3]),as.vector(allGenes[,1]))
+react_data<-allGenes[geneCoordinates,]
+react_noNA<-na.omit(react_data)
+react_noNA %>% dim
+
+x<-allGenes
+y<-react_noNA
+mx<-quantile(x[,4],0.999)
+mn<-quantile(x[,4],0.001)
+ksp<-ks.test(x[,4], y[,4])$p.value
+kst<-paste("KS p-value= ",round(ksp,4),sep='')
+d1<-density(x[,4])$y
+d2<-density(y[,4])$y
+plot(density(x[,4]),col='blue',xlim=c(mn,mx), ylim=c(0,max(c(d1,d2))), xlab="", ylab="Density", main = "", cex.lab=1.5, cex.axis=1.5)
+legend(1.5,1.8,c("All","Reactome list"),fill=c(4,2), title=kst,cex=1.2)
+lines(density(y[,4],na.rm=T),type='l',col='red')
+
+d1max<-density(x[,4])
+d1max$x[which.max(d1max$y)]
+d2max<-density(y[1:22,4])
+d2max$x[which.max(d2max$y)]
+
+alist <- react_data %>% filter(., fold.change.ratio.normalised.to.average.mock.across.plates < 0.85) %>% dplyr::select(., entrez.gene.name) %>% unlist() %>% as.vector() %>% unique()
+dev.off()
+```
+
+# Constitutive_signalling_by_aberrant_PI3K_in_cancer
+
+```{r}
+pdf("constitutive_signalling_by_aberrant_PI3K_in_cancer.pdf", height=4, width = 8)
+b <- read.csv("~/Desktop/Gastric_Cancer_Datasets/Data/SL_tests/constitutive_signalling_by_aberrant_PI3K_in_cancer.csv")
+
+reactome <- b
+
+MolNam <- as.character(reactome$MoleculeName)
+react <- reactome[,-3]
+MolNamSplit <- t(strsplit(MolNam, split = " ", fixed = TRUE) %>% as.data.frame())
+react$Name <- MolNamSplit[,2]
+geneCoordinates<-match(as.vector(react[,3]),as.vector(allGenes[,1]))
+react_data<-allGenes[geneCoordinates,]
+react_noNA<-na.omit(react_data)
+react_noNA %>% dim
+
+x<-allGenes
+y<-react_noNA
+mx<-quantile(x[,4],0.999)
+mn<-quantile(x[,4],0.001)
+ksp<-ks.test(x[,4], y[,4])$p.value
+kst<-paste("KS p-value= ",round(ksp,4),sep='')
+d1<-density(x[,4])$y
+d2<-density(y[,4])$y
+plot(density(x[,4]),col='blue',xlim=c(mn,mx), ylim=c(0,max(c(d1,d2))),
+    xlab="",ylab="Density", main = "", cex.lab=1.5, cex.axis=1.5)
+legend(1.5,1.8,c("All","Reactome list"),fill=c(4,2), title=kst,cex=1.2)
+lines(density(y[,4],na.rm=T),type='l',col='red')
+
+d1max<-density(x[,4])
+d1max$x[which.max(d1max$y)]
+d2max<-density(y[1:86,4])
+d2max$x[which.max(d2max$y)]
+
+blist <- react_data %>% filter(., fold.change.ratio.normalised.to.average.mock.across.plates < 0.85) %>% dplyr::select(., entrez.gene.name) %>% unlist() %>% as.vector() %>% unique()
+dev.off()
+```
+
+# G_beta_gamma_signalling_through_PI3Kgamma
+
+```{r}
+pdf("G_beta_gamma_signalling_through_PI3Kgamma.pdf", height=4, width = 8)
+c <- read.csv("~/Desktop/Gastric_Cancer_Datasets/Data/SL_tests/G_beta_gamma_signalling_through_PI3Kgamma.csv")
+
+reactome <- c
+
+MolNam <- as.character(reactome$MoleculeName)
+react <- reactome[,-3]
+MolNamSplit <- t(strsplit(MolNam, split = " ", fixed = TRUE) %>% as.data.frame())
+react$Name <- MolNamSplit[,2]
+geneCoordinates<-match(as.vector(react[,3]),as.vector(allGenes[,1]))
+react_data<-allGenes[geneCoordinates,]
+react_noNA<-na.omit(react_data)
+react_noNA %>% dim
+
+x<-allGenes
+y<-react_noNA
+mx<-quantile(x[,4],0.999)
+mn<-quantile(x[,4],0.001)
+ksp<-ks.test(x[,4], y[,4])$p.value
+kst<-paste("KS p-value= ",round(ksp,4),sep='')
+d1<-density(x[,4])$y
+d2<-density(y[,4])$y
+plot(density(x[,4]),col='blue',xlim=c(mn,mx), ylim=c(0,max(c(d1,d2))),
+    xlab="",ylab="Density", main = "", cex.lab=1.5, cex.axis=1.5)
+legend(1.5,3,c("All","Reactome list"),fill=c(4,2), title=kst,cex=1.2)
+lines(density(y[,4],na.rm=T),type='l',col='red')
+
+d1max<-density(x[,4])
+d1max$x[which.max(d1max$y)]
+d2max<-density(y[1:25,4])
+d2max$x[which.max(d2max$y)]
+
+clist <- react_data %>% filter(., fold.change.ratio.normalised.to.average.mock.across.plates < 0.85) %>% dplyr::select(., entrez.gene.name) %>% unlist() %>% as.vector() %>% unique()
+dev.off()
+```
+
+# Negative_regulation_of_the_PI3K_AKT_network
+
+```{r}
+pdf("negative_regulation_of_the_PI3K_AKT_network.pdf", height=4, width = 8)
+d <- read.csv("~/Desktop/Gastric_Cancer_Datasets/Data/SL_tests/negative_regulation_of_the_PI3K_AKT_network.csv")
+
+reactome <- d
+
+MolNam <- as.character(reactome$MoleculeName)
+react <- reactome[,-3]
+MolNamSplit <- t(strsplit(MolNam, split = " ", fixed = TRUE) %>% as.data.frame())
+react$Name <- MolNamSplit[,2]
+geneCoordinates<-match(as.vector(react[,3]),as.vector(allGenes[,1]))
+react_data<-allGenes[geneCoordinates,]
+react_noNA<-na.omit(react_data)
+react_noNA %>% dim
+
+x<-allGenes
+y<-react_noNA
+mx<-quantile(x[,4],0.999)
+mn<-quantile(x[,4],0.001)
+ksp<-ks.test(x[,4], y[,4])$p.value
+kst<-paste("KS p-value= ",round(ksp,4),sep='')
+d1<-density(x[,4])$y
+d2<-density(y[,4])$y
+plot(density(x[,4]),col='blue',xlim=c(mn,mx), ylim=c(0,3),
+    xlab="",ylab="Density", main = "", cex.lab=1.5, cex.axis=1.5)
+legend(1.5,1.8,c("All","Reactome list"),fill=c(4,2), title=kst,cex=1.2)
+lines(density(y[,4],na.rm=T),type='l',col='red')
+
+d1max<-density(x[,4])
+d1max$x[which.max(d1max$y)]
+d2max<-density(y[1:122,4])
+d2max$x[which.max(d2max$y)]
+
+dlist <- react_data %>% filter(., fold.change.ratio.normalised.to.average.mock.across.plates < 0.85) %>% dplyr::select(., entrez.gene.name) %>% unlist() %>% as.vector() %>% unique()
+dev.off()
+```
+
+# PI3K_AKT_activation
+
+```{r}
+pdf("PI3K_AKT_activation.pdf", height=4, width = 8)
+e <- read.csv("~/Desktop/Gastric_Cancer_Datasets/Data/SL_tests/PI3K_AKT_activation.csv")
+
+reactome <- e
+
+MolNam <- as.character(reactome$MoleculeName)
+react <- reactome[,-3]
+MolNamSplit <- t(strsplit(MolNam, split = " ", fixed = TRUE) %>% as.data.frame())
+react$Name <- MolNamSplit[,2]
+geneCoordinates<-match(as.vector(react[,3]),as.vector(allGenes[,1]))
+react_data<-allGenes[geneCoordinates,]
+react_noNA<-na.omit(react_data)
+react_noNA %>% dim
+
+x<-allGenes
+y<-react_noNA
+mx<-quantile(x[,4],0.999)
+mn<-quantile(x[,4],0.001)
+ksp<-ks.test(x[,4], y[,4])$p.value
+kst<-paste("KS p-value= ",round(ksp,4),sep='')
+d1<-density(x[,4])$y
+d2<-density(y[,4])$y
+plot(density(x[,4]),col='blue',xlim=c(mn,mx), ylim=c(0,max(c(d1,d2))),
+    xlab="",ylab="Density", main = "", cex.lab=1.5, cex.axis=1.5)
+legend(1.5,1.8,c("All","Reactome list"),fill=c(4,2), title=kst,cex=1.2)
+lines(density(y[,4],na.rm=T),type='l',col='red')
+
+d1max<-density(x[,4])
+d1max$x[which.max(d1max$y)]
+d2max<-density(y[1:9,4])
+d2max$x[which.max(d2max$y)]
+
+elist <- react_data %>% filter(., fold.change.ratio.normalised.to.average.mock.across.plates < 0.85) %>% dplyr::select(., entrez.gene.name) %>% unlist() %>% as.vector() %>% unique()
+dev.off
+```
+
+# PI3K_AKT_signalling_in_cancer
+
+```{r}
+pdf("PI3K_AKT_signalling_in_cancer.pdf", height=4, width = 8)
+f <- read.csv("~/Desktop/Gastric_Cancer_Datasets/Data/SL_tests/PI3K_AKT_signalling_in_cancer.csv")
+
+reactome <- f
+
+MolNam <- as.character(reactome$MoleculeName)
+react <- reactome[,-3]
+MolNamSplit <- t(strsplit(MolNam, split = " ", fixed = TRUE) %>% as.data.frame())
+react$Name <- MolNamSplit[,2]
+geneCoordinates<-match(as.vector(react[,3]),as.vector(allGenes[,1]))
+react_data<-allGenes[geneCoordinates,]
+react_noNA<-na.omit(react_data)
+react_noNA %>% dim
+
+x<-allGenes
+y<-react_noNA
+mx<-quantile(x[,4],0.999)
+mn<-quantile(x[,4],0.001)
+ksp<-ks.test(x[,4], y[,4])$p.value
+kst<-paste("KS p-value= ",round(ksp,4),sep='')
+d1<-density(x[,4])$y
+d2<-density(y[,4])$y
+plot(density(x[,4]),col='blue',xlim=c(mn,mx), ylim=c(0,max(c(d1,d2))),
+    xlab="",ylab="Density", main = "", cex.lab=1.5, cex.axis=1.5)
+legend(1.5,1.8,c("All","Reactome list"),fill=c(4,2), title=kst,cex=1.2)
+lines(density(y[,4],na.rm=T),type='l',col='red')
+
+d1max<-density(x[,4])
+d1max$x[which.max(d1max$y)]
+d2max<-density(y[1:112,4])
+d2max$x[which.max(d2max$y)]
+
+flist <- react_data %>% filter(., fold.change.ratio.normalised.to.average.mock.across.plates < 0.85) %>% dplyr::select(., entrez.gene.name) %>% unlist() %>% as.vector() %>% unique()
+dev.off()
+```
+
+# PI3K_cascade
+
+```{r}
+pdf("PI3K_cascade.pdf", height=4, width = 8)
+g <- read.csv("~/Desktop/Gastric_Cancer_Datasets/Data/SL_tests/PI3K_cascade.csv")
+
+reactome <- g
+
+MolNam <- as.character(reactome$MoleculeName)
+react <- reactome[,-3]
+MolNamSplit <- t(strsplit(MolNam, split = " ", fixed = TRUE) %>% as.data.frame())
+react$Name <- MolNamSplit[,2]
+geneCoordinates<-match(as.vector(react[,3]),as.vector(allGenes[,1]))
+react_data<-allGenes[geneCoordinates,]
+react_noNA<-na.omit(react_data)
+react_noNA %>% dim
+
+x<-allGenes
+y<-react_noNA
+mx<-quantile(x[,4],0.999)
+mn<-quantile(x[,4],0.001)
+ksp<-ks.test(x[,4], y[,4])$p.value
+kst<-paste("KS p-value= ",round(ksp,4),sep='')
+d1<-density(x[,4])$y
+d2<-density(y[,4])$y
+plot(density(x[,4]),col='blue',xlim=c(mn,mx), ylim=c(0,2.5),
+  xlab="",ylab="Density", main = "", cex.lab=1.5, cex.axis=1.5)
+legend(1.5,1.8,c("All","Reactome list"),fill=c(4,2), title=kst,cex=1.2)
+lines(density(y[,4],na.rm=T),type='l',col='red')
+
+d1max<-density(x[,4])
+d1max$x[which.max(d1max$y)]
+d2max<-density(y[1:50,4])
+d2max$x[which.max(d2max$y)]
+
+glist <- react_data %>% filter(., fold.change.ratio.normalised.to.average.mock.across.plates < 0.85) %>% dplyr::select(., entrez.gene.name) %>% unlist() %>% as.vector() %>% unique()
+dev.off()
+```
+
+# PI3K_events_in_ERBB3_signalling
+
+```{r}
+pdf("PI3K_events_in_ERBB3_signalling.pdf", height=4, width = 8)
+h <- read.csv("~/Desktop/Gastric_Cancer_Datasets/Data/SL_tests/PI3K_events_in_ERBB3_signalling.csv")
+
+reactome <- h
+
+MolNam <- as.character(reactome$MoleculeName)
+react <- reactome[,-3]
+MolNamSplit <- t(strsplit(MolNam, split = " ", fixed = TRUE) %>% as.data.frame())
+react$Name <- MolNamSplit[,2]
+geneCoordinates<-match(as.vector(react[,3]),as.vector(allGenes[,1]))
+react_data<-allGenes[geneCoordinates,]
+react_noNA<-na.omit(react_data)
+react_noNA %>% dim
+
+x<-allGenes
+y<-react_noNA
+mx<-quantile(x[,4],0.999)
+mn<-quantile(x[,4],0.001)
+ksp<-ks.test(x[,4], y[,4])$p.value
+kst<-paste("KS p-value= ",round(ksp,4),sep='')
+d1<-density(x[,4])$y
+d2<-density(y[,4])$y
+plot(density(x[,4]),col='blue',xlim=c(mn,mx), ylim=c(0,2.5),
+   xlab="",ylab="Density", main = "", cex.lab=1.5, cex.axis=1.5)
+legend(1.5,1.8,c("All","Reactome list"),fill=c(4,2), title=kst,cex=1.2)
+lines(density(y[,4],na.rm=T),type='l',col='red')
+
+d1max<-density(x[,4])
+d1max$x[which.max(d1max$y)]
+d2max<-density(y[1:18,4])
+d2max$x[which.max(d2max$y)]
+
+hlist <- react_data %>% filter(., fold.change.ratio.normalised.to.average.mock.across.plates < 0.85) %>% dplyr::select(., entrez.gene.name) %>% unlist() %>% as.vector() %>% unique()
+dev.off()
+```
+
+# PI3K_events_in_ERBB4_signalling
+
+```{r}
+pdf("PI3K_events_in_ERBB4_signalling.pdf", height=4, width = 8)
+i <- read.csv("~/Desktop/Gastric_Cancer_Datasets/Data/SL_tests/PI3K_events_in_ERBB4_signalling.csv")
+
+reactome <- i
+
+MolNam <- as.character(reactome$MoleculeName)
+react <- reactome[,-3]
+MolNamSplit <- t(strsplit(MolNam, split = " ", fixed = TRUE) %>% as.data.frame())
+react$Name <- MolNamSplit[,2]
+geneCoordinates<-match(as.vector(react[,3]),as.vector(allGenes[,1]))
+react_data<-allGenes[geneCoordinates,]
+react_noNA<-na.omit(react_data)
+react_noNA %>% dim
+
+x<-allGenes
+y<-react_noNA
+mx<-quantile(x[,4],0.999)
+mn<-quantile(x[,4],0.001)
+ksp<-ks.test(x[,4], y[,4])$p.value
+kst<-paste("KS p-value= ",round(ksp,4),sep='')
+d1<-density(x[,4])$y
+d2<-density(y[,4])$y
+plot(density(x[,4]),col='blue',xlim=c(mn,mx), ylim=c(0,2.5),
+    xlab="",ylab="Density", main = "", cex.lab=1.5, cex.axis=1.5)
+legend(1.5,1.8,c("All","Reactome list"),fill=c(4,2), title=kst,cex=1.2)
+lines(density(y[,4],na.rm=T),type='l',col='red')
+
+d1max<-density(x[,4])
+d1max$x[which.max(d1max$y)]
+d2max<-density(y[1:11,4])
+d2max$x[which.max(d2max$y)]
+
+ilist <- react_data %>% filter(., fold.change.ratio.normalised.to.average.mock.across.plates < 0.85) %>% dplyr::select(., entrez.gene.name) %>% unlist() %>% as.vector() %>% unique()
+dev.off()
+```
+
+# PI5P_PP2A_and_IER3_regulate_PI3K_AKT_signalling
+
+```{r}
+pdf("Pi5P_PP2A_and_IER3_regulate_PI3K_AKT_signalling.pdf", height=4, width = 8)
+j <- read.csv("~/Desktop/Gastric_Cancer_Datasets/Data/SL_tests/Pi5P_PP2A_and_IER3_regulate_PI3K_AKT_signalling.csv")
+
+reactome <- j
+
+MolNam <- as.character(reactome$MoleculeName)
+react <- reactome[,-3]
+MolNamSplit <- t(strsplit(MolNam, split = " ", fixed = TRUE) %>% as.data.frame())
+react$Name <- MolNamSplit[,2]
+geneCoordinates<-match(as.vector(react[,3]),as.vector(allGenes[,1]))
+react_data<-allGenes[geneCoordinates,]
+react_noNA<-na.omit(react_data)
+react_noNA %>% dim
+
+x<-allGenes
+y<-react_noNA
+mx<-quantile(x[,4],0.999)
+mn<-quantile(x[,4],0.001)
+ksp<-ks.test(x[,4], y[,4])$p.value
+kst<-paste("KS p-value= ",round(ksp,4),sep='')
+d1<-density(x[,4])$y
+d2<-density(y[,4])$y
+plot(density(x[,4]),col='blue',xlim=c(mn,mx), ylim=c(0,2.5),
+    xlab="",ylab="Density", main = "", cex.lab=1.5, cex.axis=1.5)
+legend(1.5,1.8,c("All","Reactome list"),fill=c(4,2), title=kst,cex=1.2)
+lines(density(y[,4],na.rm=T),type='l',col='red')
+
+d1max<-density(x[,4])
+d1max$x[which.max(d1max$y)]
+d2max<-density(y[1:115,4])
+d2max$x[which.max(d2max$y)]
+
+jlist <- react_data %>% filter(., fold.change.ratio.normalised.to.average.mock.across.plates < 0.85) %>% dplyr::select(., entrez.gene.name) %>% unlist() %>% as.vector() %>% unique()
+dev.off()
+```
+
+
+
+
+# Pull genes from all pathways with a fold change ratio < 0.85 and combine into one vector. Ordered inhibitors for genes from this list.
+
+```{r}
+pathwaygenes <- c(alist, blist, clist, dlist, elist, flist, glist, hlist, ilist, jlist) %>% unique  
+pathwaygenes
+```
+
+p-values <0.05
+
+```{r}
+pathwaygenes_p <- c(clist, flist, glist) %>% unique  
+pathwaygenes_p %>% sort
+```
+
+FC ------------------------ 
+
+```{r}
+load("~/Desktop/Gastric_Cancer_Datasets/Saved/GSE_AKT3_3rds_limma_output.Rdata")
+load("~/Desktop/Gastric_Cancer_Datasets/Saved/TCGA_AKT3_3rds_limma_output.Rdata")
+```
+
+```{r}
+tcga_rec_keep <- which(rownames(tcga_AKT3_tt_extr) %in% pathwaygenes)
+tcga_rec_keep %>% length()
+
+tcga_tt_rec_keygenes <- tcga_AKT3_tt_extr[tcga_rec_keep,]
+tcga_tt_rec_keygenes %>% dim()
+tcga_tt_rec_keygenes %>% head()
+
+#write.csv(tcga_tt_rec_keygenes, file = "recTCGA.csv")
+```
+
+```{r}
+gse_rec_keep <- which(rownames(gse_AKT3_tt_extr) %in% pathwaygenes)
+gse_rec_keep %>% length()
+
+gse_tt_rec_keygenes <- gse_AKT3_tt_extr[gse_rec_keep,]
+gse_tt_rec_keygenes %>% dim()
+gse_tt_rec_keygenes %>% head
+
+#write.csv(gse_tt_rec_keygenes, file = "recGEO.csv")
+```
+
+

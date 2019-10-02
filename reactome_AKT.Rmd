@@ -1,0 +1,115 @@
+---
+title: "reactome_AKT"
+author: "Jacqui Perkinson"
+date: "7/26/2019"
+output: html_document
+---
+
+Load required packages.
+
+```{r message=FALSE}
+library(dplyr)
+library(ggplot2)
+library(reactome.db)
+library(ReactomePA)
+library(org.Hs.eg.db)
+```
+
+Load required objects.
+
+```{r}
+load("~/Desktop/Gastric_Cancer_Datasets/Saved/venn_AKT_genelists_output.Rdata")
+```
+
+# Gene ontology using reactome.
+
+### 51 gene list (AKT3 associated, filtered on fold change).
+
+AKT3_final - convert to Entrez gene IDs
+
+```{r}
+AKT3_Entrez <- select(org.Hs.eg.db, keys = AKT3_final, columns = c("ENTREZID", "SYMBOL"), keytype = "SYMBOL")
+AKT3_Entrez <- as.vector(AKT3_Entrez[,2])
+```
+
+Perform pathway analysis via reactomePA
+
+```{r}
+AKT3_rPAoverrep <- enrichPathway(gene = AKT3_Entrez, organism = "human", pvalueCutoff = 0.05, readable = T)
+AKT3_rPAoverrep %>% as.data.frame() %>% View
+#write.csv(AKT3_rPAoverrep, file = "51reactome.csv")
+```
+
+Plots
+
+```{r}
+pdf("reactome51.pdf")
+#barplot(AKT3_rPAoverrep, showCategory = 10, font.size = 8)
+dotplot(AKT3_rPAoverrep, showCategory = 10, font.size = 1)
+dev.off()
+```
+
+### 3498 gene list (AKT3 associated, not filtered by fold change).
+
+AKT3_allsig - convert to Entrez gene IDs
+
+```{r}
+allAKT3_Entrez <- select(org.Hs.eg.db, keys = AKT3_allsig, columns = c("ENTREZID", "SYMBOL"), keytype = "SYMBOL")
+allAKT3_Entrez <- as.vector(allAKT3_Entrez[,2])
+```
+
+Perform pathway analysis via reactomePA
+
+```{r}
+allAKT3_rPAoverrep <- enrichPathway(gene = allAKT3_Entrez, organism = "human", pvalueCutoff = 0.05, readable = T)
+allAKT3_rPAoverrep %>% as.data.frame() %>% head
+#write.csv(allAKT3_rPAoverrep, file = "3498reactome.csv")
+```
+
+Plots
+
+```{r}
+pdf("reactome3498.pdf")
+#barplot(allAKT3_rPAoverrep, showCategory = 11, font.size = 6)
+dotplot(allAKT3_rPAoverrep, showCategory = 10, font.size = 2)
+dev.off()
+```
+
+### 190 gene list (AKT1 associated, not filtered by fold change).
+
+AKT1_final - convert to Entrez gene IDs
+
+```{r}
+AKT1_Entrez <- select(org.Hs.eg.db, keys = AKT1_final, columns = c("ENTREZID", "SYMBOL"), keytype = "SYMBOL")
+AKT1_Entrez <- as.vector(AKT1_Entrez[,2])
+```
+
+Perform pathway analysis via reactomePA - not significant.
+
+```{r}
+AKT1_rPAoverrep <- enrichPathway(gene = AKT1_Entrez, organism = "human", pvalueCutoff = 0.05, readable = T, qvalueCutoff = 0.5)
+AKT1_rPAoverrep %>% head
+#write.csv(AKT1_rPAoverrep, file = "190reactome.csv")
+```
+
+Plots
+
+```{r}
+#pdf("reactome190.pdf")
+#barplot(AKT1_rPAoverrep, showCategory = 11, font.size = 8)
+#dotplot(AKT1_rPAoverrep, showCategory = 11, font.size = 4)
+#dev.off()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+

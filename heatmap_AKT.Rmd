@@ -1,0 +1,120 @@
+---
+title: "heatmap_AKT"
+author: "Jacqui Perkinson"
+date: "7/27/2019"
+output: html_document
+---
+
+Load required packages.
+
+```{r message=FALSE}
+library(dplyr)
+library(gplots)
+```
+
+Load required objects.
+
+```{r}
+load("~/Desktop/Gastric_Cancer_Datasets/Saved/venn_AKT_genelists_output.Rdata")
+load("~/Desktop/Gastric_Cancer_Datasets/Saved/expDat_clinDat_output.Rdata")
+```
+
+Objects for heatmaps.
+
+```{r}
+genes51 <- AKT3_final
+genes3498 <- AKT3_allsig
+genes190 <- AKT1_final
+g_expdat <- gse62254_expDat
+t_expdat <- tcga_expDat
+```
+
+# Heatmap of 51 genes (associated with AKT3, filtered on fold change).
+
+Heatmap of genes in GSE datset.
+
+```{r}
+#pdf("51hm_GEO.pdf", height=4)
+g_htmap <- g_expdat[match(genes51, rownames(g_expdat)),]
+dim(g_htmap)
+g_htmap <- t(apply(g_htmap, 1, scale, scale = T))
+g_htmap[g_htmap < -3] <- -3
+g_htmap[g_htmap > 3] = 3
+heatmap.2(g_htmap, trace = 'none', scale ='none', col = bluered(50))
+#dev.off()
+```
+
+Heatmap of genes in TCGA datset.
+
+```{r}
+#pdf("51hm_TCGA.pdf", height=4)
+t_htmap <- t_expdat[match(genes51, rownames(t_expdat)),]
+dim(t_htmap)
+t_htmap <- t(apply(t_htmap, 1, scale, scale = T))
+t_htmap[t_htmap < -3] <- -3
+t_htmap[t_htmap > 3] = 3
+heatmap.2(t_htmap, trace = 'none', scale ='none', col = bluered(50))
+#dev.off()
+```
+
+# Heatmap of 3498 genes (associated with AKT3, filtered on fold change).
+
+Heatmap of genes in GSE datset.
+
+```{r}
+#pdf("3498hm_GEO.pdf", height=4)
+g_htmap <- g_expdat[match(genes3498, rownames(g_expdat)),]
+dim(g_htmap)
+g_htmap <- t(apply(g_htmap, 1, scale, scale = T))
+g_htmap[g_htmap < -3] <- -3
+g_htmap[g_htmap > 3] = 3
+heatmap.2(g_htmap, trace = 'none', scale ='none', col = bluered(50))
+#dev.off()
+```
+
+Heatmap of genes in TCGA datset.
+
+```{r}
+#pdf("3498hm_TCGA.pdf", height=4)
+t_htmap <- t_expdat[match(genes3498, rownames(t_expdat)),]
+dim(t_htmap)
+t_htmap <- t(apply(t_htmap, 1, scale, scale = T))
+t_htmap[t_htmap < -3] <- -3
+t_htmap[t_htmap > 3] = 3
+heatmap.2(t_htmap, trace = 'none', scale ='none', col = bluered(50))
+#dev.off()
+```
+
+# Heatmap of 190 genes (associated with AKT1, filtered on fold change).
+
+Heatmap of genes in GSE datset.
+
+```{r}
+#pdf("190hm_GEO.pdf", height=4)
+g_htmap <- g_expdat[match(genes190, rownames(g_expdat)),]
+dim(g_htmap)
+g_htmap <- t(apply(g_htmap, 1, scale, scale = T))
+g_htmap[g_htmap < -3] <- -3
+g_htmap[g_htmap > 3] = 3
+heatmap.2(g_htmap, trace = 'none', scale ='none', col = bluered(50))
+#dev.off()
+```
+
+Heatmap of genes in TCGA datset.
+
+```{r}
+#pdf("190hm_TCGA.pdf", height=4)
+t_htmap <- t_expdat[match(genes190, rownames(t_expdat)),]
+dim(t_htmap)
+t_htmap <- t(apply(t_htmap, 1, scale, scale = T))
+t_htmap[t_htmap < -3] <- -3
+t_htmap[t_htmap > 3] = 3
+heatmap.2(t_htmap, trace = 'none', scale ='none', col = bluered(50))
+#dev.off()
+```
+
+
+
+
+
+
