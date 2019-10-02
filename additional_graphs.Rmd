@@ -1,0 +1,244 @@
+---
+title: "TCGA_CDH1_AKT_validation"
+author: "Jacqui Perkinson"
+date: "9/12/2019"
+output: html_document
+---
+
+Load required packages
+
+```{r}
+library(ggplot2)
+library(dplyr)
+```
+
+# Load TCGA setup objects
+
+```{r}
+load("~/Desktop/Gastric_Cancer_Datasets/Saved/TCGA_setup.Rdata")
+load("~/Desktop/Gastric_Cancer_Datasets/Saved/GSE_setup.Rdata")
+```
+
+Histograms
+
+```{r}
+aa <- expression('Log'['2']*' expression of CDH1 in TCGA')
+ab <- expression('Log'['2']*' expression of AKT3 in TCGA')
+ac <- expression('Log'['2']*' expression of AKT1 in TCGA')
+
+ca <- expression('Log'['2']*' expression of CDH1 in GEO')
+cb <- expression('Log'['2']*' expression of AKT3 in GEO')
+cc <- expression('Log'['2']*' expression of AKT1 in GEO')
+
+
+#pdf("hist1.pdf", height=4, width = 5)
+hist(tcga_expDat["CDH1",], border="white", col="grey35", xlim = c(-2,12), xlab = aa, main = "", cex.lab=1.5, cex.axis=1.5, n=30, yaxp = c(0,120,3), ylim = c(0,120))
+#dev.off()
+
+#pdf("hist2.pdf", height=4, width = 5)
+hist(tcga_expDat["AKT3",], border="white", col="grey35",ylim = c(0,40), xlim = c(1,8), xlab = ab, main = "", cex.lab=1.5, cex.axis=1.5, n=30)
+#dev.off()
+
+#pdf("hist3.pdf", height=4, width = 5)
+hist(tcga_expDat["AKT1",], border="white", col="grey35",ylim = c(0,50), xlim = c(5.5,9), xlab = ac, main = "", cex.lab=1.5, cex.axis=1.5, n=40, yaxp = c(0,50,5))
+#dev.off()
+
+#pdf("hist4.pdf", height=4, width = 5)
+hist(gse62254_expDat["CDH1",], border="white", col="grey35",ylim = c(0,60), xlim = c(6,13), xlab = ca, main = "", cex.lab=1.5, cex.axis=1.5, n=30, yaxp = c(0,60,3))
+#dev.off()
+
+#pdf("hist5.pdf", height=4, width = 5)
+hist(gse62254_expDat["AKT3",], border="white", col="grey35",ylim = c(0,30), xlim = c(7,12), xlab = cb, main = "", cex.lab=1.5, cex.axis=1.5, n=30)
+#dev.off()
+
+#pdf("hist6.pdf", height=4, width = 5)
+hist(gse62254_expDat["AKT1",], border="white", col="grey35",ylim = c(0,40), xlim = c(7,9.5), xlab = cc, main = "", cex.lab=1.5, cex.axis=1.5, n=30)
+#dev.off()
+```
+
+Ranked expression plots
+
+```{r}
+aaa <- expression('Log'['2']*' expression of CDH1')
+abb <- expression('Log'['2']*' expression of AKT3')
+acc <- expression('Log'['2']*' expression of AKT1')
+
+#pdf("sortakt3.pdf", height=5, width = 6)
+par(mar=c(5, 5, 4, 2) + 0.1)
+plot(sort(tcga_expDat["AKT3",]), ylab = abb, xlab = "AKT3 expression rank in TCGA", pch = 16, cex = 0.8, cex.lab=1.5, cex.axis=1.5, yaxp = c(1,8,7), ylim = c(1,8))
+abline(h=quantile(tcga_expDat["AKT3",], 0.1), col='red', lty= 1)
+#dev.off
+
+#pdf("sortakt1.pdf", height=5, width = 6)
+par(mar=c(5, 5, 4, 2) + 0.1)
+plot(sort(tcga_expDat["AKT1",]), ylab = acc, xlab = "AKT1 expression rank in TCGA", pch = 16, cex = 0.8, cex.lab=1.5, cex.axis=1.5, yaxp = c(6,9,3))
+abline(h=quantile(tcga_expDat["AKT1",], 0.1), col='red', lty= 1)
+#dev.off()
+
+
+
+#pdf("sortakt3GEO.pdf", height=5, width = 6)
+par(mar=c(5, 5, 4, 2) + 0.1)
+plot(sort(gse62254_expDat["AKT3",]), ylab = abb, xlab = "AKT3 expression rank in GEO", pch = 16, cex = 0.8, cex.lab=1.5, cex.axis=1.5, ylim = c(7,11), yaxp = c(7,11,4))
+abline(h=quantile(gse62254_expDat["AKT3",], 0.1), col='red', lty= 1)
+#dev.off
+
+#pdf("sortakt1GEO.pdf", height=5, width = 6)
+par(mar=c(5, 5, 4, 2) + 0.1)
+plot(sort(gse62254_expDat["AKT1",]), ylab = acc, xlab = "AKT1 expression rank in GEO", pch = 16, cex = 0.8, cex.lab=1.5, cex.axis=1.5, ylim = c(7,9), yaxp = c(7,9,4))
+abline(h=quantile(gse62254_expDat["AKT1",], 0.1), col='red', lty= 1)
+#dev.off()
+
+
+
+#pdf("sortcdh1.pdf", height=5, width = 6)
+par(mar=c(5, 5, 4, 2) + 0.1)
+plot(sort(tcga_expDat["CDH1",]), ylab = aaa, xlab = "CDH1 expression rank in TCGA", pch = 16, cex = 0.8, cex.lab=1.5, cex.axis=1.5, ylim = c(-2,12), yaxp = c(-2,12,4))
+abline(h=quantile(tcga_expDat["CDH1",], 0.1), col='red', lty= 1)
+#dev.off
+
+#pdf("sortcdh1GEO.pdf", height=5, width = 6)
+par(mar=c(5, 5, 4, 2) + 0.1)
+plot(sort(gse62254_expDat["CDH1",]), ylab = aaa, xlab = "CDH1 expression rank in GEO", pch = 16, cex = 0.8, cex.lab=1.5, cex.axis=1.5, ylim = c(6,14), yaxp = c(6,14,4))
+abline(h=quantile(gse62254_expDat["CDH1",], 0.1), col='red', lty= 1)
+#dev.off
+```
+
+Scatter plots and cor.test
+
+```{r}
+a <- expression('Log'['2']*' expression of AKT3 in TCGA')
+c <- expression('Log'['2']*' expression of AKT3 in GEO')
+
+
+#pdf("corTCGA.pdf", height=4)
+par(mar=c(5, 8, 6, 2) + 0.1)
+plot(tcga_expDat["AKT3",], tcga_expDat["CDH1",], pch = 16, cex = 0.8, ylab = "CDH1 in TCGA", xlab =a,  ylim = c(0,12), cex.lab=1.5, cex.axis=1.5, yaxp = c(0,12,6))
+abline(h=quantile(tcga_expDat["CDH1",], 0.1), col='red')
+abline(v=quantile(tcga_expDat["AKT3",], 0.1), col='blue')
+#dev.off()
+
+#pdf("corGEO.pdf", height=4)
+par(mar=c(5, 8, 6, 2) + 0.1)
+plot(gse62254_expDat["AKT3",], gse62254_expDat["CDH1",], pch = 16, cex = 0.8, ylab = "CDH1 in GEO", xlab =c, xlim = c(7,11), ylim = c(6,13),yaxp = c(6,13,2), cex.lab=1.5, cex.axis=1.5)
+abline(h=quantile(gse62254_expDat["CDH1",], 0.1), col='red')
+abline(v=quantile(gse62254_expDat["AKT3",], 0.1), col='blue')
+#dev.off()
+
+cor.test(tcga_expDat["AKT3",], tcga_expDat["CDH1",], method = "spearman")
+cor.test(gse62254_expDat["AKT3",], gse62254_expDat["CDH1",], method = "spearman")
+
+
+
+
+e <- expression('Log'['2']*' expression of AKT1 in TCGA')
+g <- expression('Log'['2']*' expression of AKT1 in GEO')
+
+pdf("corcdhakt1TCGA.pdf", height=4)
+par(mar=c(5, 8, 6, 2) + 0.1)
+plot(tcga_expDat["AKT1",], tcga_expDat["CDH1",], pch = 16, cex = 0.8, ylab = "CDH1 in TCGA", xlab =e, ylim = c(-2,12), xlim = c(5.5,9), cex.lab=1.5, cex.axis=1.5, yaxp = c(-2,12,4))
+abline(h=quantile(tcga_expDat["CDH1",], 0.1), col='red')
+abline(v=quantile(tcga_expDat["AKT1",], 0.1), col='blue')
+dev.off()
+
+pdf("corcdhakt1GEO.pdf", height=4)
+par(mar=c(5, 8, 6, 2) + 0.1)
+plot(gse62254_expDat["AKT1",], gse62254_expDat["CDH1",], pch = 16, cex = 0.8, ylab = "CDH1 in GEO", xlab =g, ylim = c(6,13), xlim = c(7,9.5), cex.lab=1.5, cex.axis=1.5, yaxp = c(6,13,2))
+abline(h=quantile(gse62254_expDat["CDH1",], 0.1), col='red')
+abline(v=quantile(gse62254_expDat["AKT1",], 0.1), col='blue')
+dev.off()
+
+cor.test(tcga_expDat["AKT1",], tcga_expDat["CDH1",], method = "spearman")
+cor.test(gse62254_expDat["AKT1",], gse62254_expDat["CDH1",], method = "spearman")
+```
+
+Extra scatterplots
+
+```{r}
+plot(tcga_expDat["AKT1",], tcga_expDat["AKT3",], pch = 16, cex = 0.8, ylab = "Log2 expression of AKT3 in TCGA", xlab ="Log2 expression of AKT1 in TCGA", xlim = c(5.5,9))
+
+plot(gse62254_expDat["AKT1",], gse62254_expDat["AKT3",], pch = 16, cex = 0.8, ylab = "Log2 expression of AKT3 in GEO", xlab ="Log2 expression of AKT1 in GEO", xlim = c(7,9.5), ylim = c(7,11))
+
+cor.test(tcga_expDat["AKT1",], tcga_expDat["AKT3",], method = "spearman")
+cor.test(gse62254_expDat["AKT1",], gse62254_expDat["AKT3",], method = "spearman")
+```
+
+Boxplots
+
+```{r}
+hiloCDH1 <- ifelse(tcga_expDat["CDH1",] < quantile(tcga_expDat["CDH1",],0.1), "LowCDH1", "HighCDH1")
+hiloCDH1_gse <- ifelse(gse62254_expDat["CDH1",] < quantile(gse62254_expDat["CDH1",],0.1), "LowCDH1", "HighCDH1")
+
+a <- expression('Log'['2']*' expression of AKT3 in TCGA')
+b <- expression('Log'['2']*' expression of CDH1 in TCGA')
+c <- expression('Log'['2']*' expression of AKT3 in GEO')
+dd <- expression('Log'['2']*' expression of CDH1 in GEO')
+
+#pdf("cdhhiloTCGA.pdf", height=4)
+df <- data.frame(CDH1=hiloCDH1, AKT3=tcga_expDat["AKT3",])
+ggplot(data=df, aes(x=CDH1, y=AKT3)) + geom_boxplot() + geom_jitter(alpha=0.3, width=0.1, aes(colour=CDH1)) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black")) + xlab(b) + ylab(a) + ylim(c(0,8)) + scale_color_manual(values=c("red","blue")) + theme(text = element_text(size=16))
+
+htcga <- (df$AKT3[df$CDH1=="HighCDH1"])
+median(df$AKT3[df$CDH1=="HighCDH1"], na.rm=TRUE)
+quantile(htcga, 0.75, na.rm = TRUE) 
+quantile(htcga, 0.25, na.rm = TRUE) 
+
+ltcga <- (df$AKT3[df$CDH1=="LowCDH1"])
+median(df$AKT3[df$CDH1=="LowCDH1"], na.rm=TRUE)
+quantile(ltcga, 0.75, na.rm = TRUE) 
+quantile(ltcga, 0.25, na.rm = TRUE) 
+#dev.off() 
+
+#pdf("cdhhiloGSE.pdf", height=4)
+df_gse <- data.frame(CDH1=hiloCDH1_gse, AKT3=gse62254_expDat["AKT3",])
+ggplot(data=df_gse, aes(x=CDH1, y=AKT3)) + geom_boxplot() + geom_jitter(alpha=0.3, width=0.1, aes(colour=CDH1)) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black")) + xlab(dd) + ylab(c) + ylim(c(7,11)) + scale_color_manual(values=c("red","blue")) + theme(text = element_text(size=16))
+
+hgse <- (df_gse$AKT3[df_gse$CDH1=="HighCDH1"])
+median(df_gse$AKT3[df_gse$CDH1=="HighCDH1"], na.rm=TRUE)
+quantile(hgse, 0.75, na.rm = TRUE) 
+quantile(hgse, 0.25, na.rm = TRUE) 
+
+lgse <- (df_gse$AKT3[df_gse$CDH1=="LowCDH1"])
+median(df_gse$AKT3[df_gse$CDH1=="LowCDH1"], na.rm=TRUE)
+quantile(lgse, 0.75, na.rm = TRUE) 
+quantile(lgse, 0.25, na.rm = TRUE) 
+#dev.off()
+```
+
+```{r}
+e <- expression('Log'['2']*' expression of AKT1 in TCGA')
+g <- expression('Log'['2']*' expression of AKT1 in GEO')
+
+#pdf("cdhhiloTCGAakt1.pdf", height=4)
+df_1 <- data.frame(CDH1=hiloCDH1, AKT1=tcga_expDat["AKT1",])
+ggplot(data=df_1, aes(x=CDH1, y=AKT1)) + geom_boxplot() + geom_jitter(alpha=0.3, width=0.1, aes(colour=CDH1)) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black")) + xlab(b) + ylab(e) + ylim(c(5.8,9)) + scale_color_manual(values=c("red","blue")) + theme(text = element_text(size=16))
+
+h <- (df_1$AKT1[df_1$CDH1=="HighCDH1"])
+median(df_1$AKT1[df_1$CDH1=="HighCDH1"], na.rm=TRUE)
+quantile(h, 0.75, na.rm = TRUE) 
+quantile(h, 0.25, na.rm = TRUE) 
+
+l <- (df_1$AKT1[df_1$CDH1=="LowCDH1"])
+median(df_1$AKT1[df_1$CDH1=="LowCDH1"], na.rm=TRUE)
+quantile(l, 0.75, na.rm = TRUE) 
+quantile(l, 0.25, na.rm = TRUE) 
+#dev.off() 
+
+#pdf("cdhhiloGSE_1.pdf", height=4)
+df_gse_1 <- data.frame(CDH1=hiloCDH1_gse, AKT1=gse62254_expDat["AKT1",])
+ggplot(data=df_gse_1, aes(x=CDH1, y=AKT1)) + geom_boxplot() + geom_jitter(alpha=0.3, width=0.1, aes(colour=CDH1)) + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black")) + xlab(b) + ylab(g)  +
+  ylim(c(7,9.1)) + scale_color_manual(values=c("red","blue")) + theme(text = element_text(size=16))
+
+h_gse <- (df_gse_1$AKT1[df_gse_1$CDH1=="HighCDH1"])
+median(df_gse_1$AKT1[df_gse_1$CDH1=="HighCDH1"], na.rm=TRUE)
+quantile(h_gse, 0.75, na.rm = TRUE) 
+quantile(h_gse, 0.25, na.rm = TRUE) 
+
+l_gse <- (df_gse_1$AKT1[df_gse_1$CDH1=="LowCDH1"])
+median(df_gse_1$AKT1[df_gse_1$CDH1=="LowCDH1"], na.rm=TRUE)
+quantile(l_gse, 0.75, na.rm = TRUE) 
+quantile(l_gse, 0.25, na.rm = TRUE) 
+#dev.off()
+```
+
+
